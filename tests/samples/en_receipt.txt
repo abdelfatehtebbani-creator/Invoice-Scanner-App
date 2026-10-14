@@ -1,0 +1,12 @@
+FRESH MART
+123 Main Street
+Receipt #: 88213
+Date: 2026-10-01 14:32
+2 x Coffee 7.00
+Bagel 2.50
+1 Orange Juice 3.75
+Subtotal 13.25
+Tax 8% 1.06
+Total 14.31
+Cash 20.00
+Change 5.69

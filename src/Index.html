@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="theme-color" content="#1a6b52">
+  <?!= include_('Styles') ?>
+</head>
+<body>
+  <header class="topbar">
+    <button class="icon-btn hidden" id="backBtn" type="button" aria-label="Back">&#8592;</button>
+    <h1 id="title">Invoice Scanner</h1>
+    <button class="icon-btn" id="langBtn" type="button" aria-label="Language">EN</button>
+  </header>
+
+  <main id="app">
+    <!-- A. Home -->
+    <section class="screen" id="screen-home">
+      <div class="big-actions">
+        <button class="big-btn primary" id="captureBtn" type="button">
+          <span class="ico">&#128247;</span>
+          <span><span data-t="capture"></span><small data-t="captureHint"></small></span>
+        </button>
+        <button class="big-btn" id="pickBtn" type="button">
+          <span class="ico">&#128444;</span>
+          <span><span data-t="pick"></span><small data-t="pickHint"></small></span>
+        </button>
+        <button class="big-btn" id="historyBtn" type="button">
+          <span class="ico">&#128203;</span>
+          <span><span data-t="history"></span><small data-t="historyHint"></small></span>
+        </button>
+      </div>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+      <input type="file" id="fileInput" accept="image/*,application/pdf" class="hidden">
+      <div class="card" style="margin-top:14px">
+        <h3 data-t="recent"></h3>
+        <div id="recentList" class="inv-list"></div>
+      </div>
+    </section>
+
+    <!-- Processing -->
+    <section class="screen hidden" id="screen-processing">
+      <div class="card center">
+        <img id="procPreview" class="preview" alt="">
+        <div class="spinner"></div>
+        <div id="procStep" style="font-weight:600"></div>
+        <p class="muted small" data-t="procHint"></p>
+      </div>
+    </section>
+
+    <!-- B. Review -->
+    <section class="screen hidden" id="screen-review">
+      <div id="reviewBanner"></div>
+      <div id="dupBox"></div>
+      <div class="card">
+        <div class="row" style="margin-bottom:8px">
+          <h3 class="grow" style="margin:0" data-t="invoiceDetails"></h3>
+          <span id="engineBadge" class="badge neutral"></span>
+        </div>
+        <img id="reviewPreview" class="preview hidden" alt="">
+        <a id="reviewImageLink" class="small hidden" target="_blank" rel="noopener" data-t="openImage"></a>
+        <div class="grid" id="headerForm" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <div class="row" style="margin-bottom:8px">
+          <h3 class="grow" style="margin:0"><span data-t="items"></span> (<span id="itemCount">0</span>)</h3>
+          <button class="btn small" id="addItemBtn" type="button">+ <span data-t="addItem"></span></button>
+        </div>
+        <div class="table-wrap"><table class="items" id="itemsTable"></table></div>
+        <p class="muted small" data-t="itemsHint"></p>
+      </div>
+      <div class="card">
+        <h3 data-t="checks"></h3>
+        <div id="totalsBox" class="totals"></div>
+        <ul class="issues" id="issuesList" style="margin-top:10px"></ul>
+      </div>
+      <div class="card hidden" id="rawTextCard">
+        <details><summary class="small muted" data-t="rawText"></summary>
+          <pre id="rawText" class="small" style="white-space:pre-wrap;direction:ltr;text-align:left"></pre></details>
+      </div>
+      <div class="sticky-actions">
+        <label class="check hidden" id="confirmWrap">
+          <input type="checkbox" id="confirmIssues"><span data-t="confirmIssues"></span>
+        </label>
+        <div class="row">
+          <button class="btn" id="cancelReviewBtn" type="button" data-t="cancel"></button>
+          <button class="btn primary grow" id="saveBtn" type="button" data-t="save"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- C. History -->
+    <section class="screen hidden" id="screen-history">
+      <div class="filters">
+        <input class="full" id="fQ" type="search" data-tp="searchPh">
+        <select id="fType"></select>
+        <select id="fStatus"></select>
+        <input id="fFrom" type="date" aria-label="From">
+        <input id="fTo" type="date" aria-label="To">
+      </div>
+      <div class="row muted small" style="margin-bottom:8px"><span id="histCount" class="grow"></span>
+        <button class="btn small" id="refreshBtn" type="button" data-t="refresh"></button></div>
+      <div id="historyList" class="inv-list"></div>
+    </section>
+
+    <!-- D. Details -->
+    <section class="screen hidden" id="screen-details">
+      <div id="detailsBody"></div>
+    </section>
+
+    <!-- Settings -->
+    <section class="screen hidden" id="screen-settings">
+      <div class="card">
+        <h3 data-t="settings"></h3>
+        <div class="grid">
+          <div class="field"><label data-t="uiLanguage"></label>
+            <select id="sLang"><option value="ar">العربية</option><option value="en">English</option></select></div>
+          <div class="field"><label data-t="ocrLanguage"></label>
+            <select id="sOcrLang"></select></div>
+          <div class="field full"><label data-t="ownerName"></label>
+            <input id="sOwner" type="text" autocomplete="organization"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 data-t="engine"></h3>
+        <p class="small" id="engineStatus"></p>
+        <p class="small muted" data-t="geminiInfo"></p>
+        <div class="field"><label data-t="geminiKey"></label>
+          <input id="sGeminiKey" type="password" autocomplete="off" spellcheck="false"></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn danger small hidden" id="clearKeyBtn" type="button" data-t="removeKey"></button>
+          <span class="grow"></span>
+          <button class="btn primary" id="saveSettingsBtn" type="button" data-t="saveSettings"></button>
+        </div>
+      </div>
+      <div class="card">
+        <h3 data-t="storage"></h3>
+        <p class="small"><a id="sheetLink" target="_blank" rel="noopener">InvoiceScanner_Data</a><br>
+          <a id="folderLink" target="_blank" rel="noopener">InvoiceScanner_Images</a></p>
+        <p class="small muted" id="whoami"></p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button type="button" data-nav="home"><span class="ico">&#127968;</span><span data-t="home"></span></button>
+    <button type="button" data-nav="history"><span class="ico">&#128203;</span><span data-t="history"></span></button>
+    <button type="button" data-nav="settings"><span class="ico">&#9881;</span><span data-t="settings"></span></button>
+  </nav>
+
+  <div id="toast" class="hidden" role="status"></div>
+  <div id="modalBack" class="modal-back hidden"><div class="modal" id="modal"></div></div>
+
+  <script><?!= sharedSource_() ?></script>
+  <?!= include_('App') ?>
+</body>
+</html>

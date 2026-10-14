@@ -1,0 +1,787 @@
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Text (Arabic / English) ----------
+  var T = {
+    ar: {
+      appTitle: 'ماسح الفواتير', capture: 'تصوير فاتورة', captureHint: 'افتح الكاميرا والتقط صورة واضحة',
+      pick: 'اختيار صورة', pickHint: 'من معرض الصور أو ملف PDF', history: 'السجل', historyHint: 'الفواتير المحفوظة والبحث',
+      home: 'الرئيسية', settings: 'الإعدادات', recent: 'آخر الفواتير', procHint: 'قد يستغرق ذلك حتى دقيقة.',
+      preparing: 'جارٍ تجهيز الصورة…', uploading: 'جارٍ رفع الصورة واستخراج البيانات…',
+      invoiceDetails: 'بيانات الفاتورة', items: 'البنود', addItem: 'بند', checks: 'التحقق من المجاميع',
+      itemsHint: 'الصفوف الصفراء غير مؤكدة والحمراء غير متطابقة. عدّل القيمة أو اضغط ✓ لتأكيدها.',
+      rawText: 'النص المستخرج (للمقارنة)', confirmIssues: 'راجعت القيم المعلّمة وأؤكد صحتها كما هي.',
+      cancel: 'إلغاء', save: 'حفظ الفاتورة', saving: 'جارٍ الحفظ…', openImage: 'فتح الصورة الأصلية في Google Drive',
+      searchPh: 'بحث: المورد، العميل، رقم الفاتورة…', refresh: 'تحديث', allTypes: 'كل الأنواع', allStatus: 'كل الحالات',
+      uiLanguage: 'لغة الواجهة', ocrLanguage: 'لغة الفواتير (تلميح للتعرف الضوئي)', ownerName: 'اسم نشاطك (لتمييز فواتير البيع)',
+      engine: 'محرك الاستخراج', geminiKey: 'مفتاح Gemini API (اختياري)', removeKey: 'حذف المفتاح', saveSettings: 'حفظ',
+      storage: 'التخزين', saved: 'تم الحفظ', edit: 'تعديل', back: 'رجوع',
+      type: 'النوع', invoiceNumber: 'رقم الفاتورة', date: 'التاريخ', partyName_purchase: 'المورد',
+      partyName_sales: 'العميل', partyName_expense: 'المتجر / الجهة', partyName_payment: 'المستلم منه / الدافع',
+      partyTaxId: 'الرقم الضريبي / NIF', currency: 'العملة', subtotal: 'المجموع قبل الضريبة', discountTotal: 'الخصم',
+      taxTotal: 'الضريبة', total: 'الإجمالي', amountPaid: 'المبلغ المدفوع', paymentMethod: 'طريقة الدفع', notes: 'ملاحظات',
+      description: 'الوصف', quantity: 'الكمية', unit: 'الوحدة', unitPrice: 'سعر الوحدة', discount: 'خصم',
+      taxRate: 'ضريبة %', taxAmount: 'مبلغ الضريبة', lineTotal: 'المجموع', calculated: 'المحسوب',
+      t_purchase: 'فاتورة شراء', t_sales: 'فاتورة بيع', t_expense: 'إيصال مصروف', t_payment: 'إيصال دفع',
+      pm_: '—', pm_cash: 'نقدًا', pm_card: 'بطاقة', pm_transfer: 'تحويل', pm_cheque: 'شيك',
+      uncertain: 'غير مؤكد ✓', missingBadge: 'مفقود', confirmed: 'مؤكد',
+      itemsSum: 'مجموع البنود', printedSubtotal: 'المجموع المطبوع', expectedTotal: 'الإجمالي المحسوب', printedTotal: 'الإجمالي المطبوع',
+      calcCol: 'محسوب', printedCol: 'مطبوع',
+      noIssues: 'لا توجد ملاحظات: البيانات متسقة.', nErrors: '{n} خطأ يجب مراجعته', nWarnings: '{n} قيمة غير مؤكدة',
+      st_Verified: 'تم التحقق', 'st_Confirmed with issues': 'مؤكد مع ملاحظات', 'st_Needs review': 'يحتاج مراجعة',
+      dupTitle: 'قد تكون هذه الفاتورة محفوظة من قبل', dupSameImage: 'نفس الصورة', dupSameDetails: 'نفس البيانات',
+      dupSameNumber: 'نفس الرقم والجهة', saveAnyway: 'حفظ رغم ذلك', viewExisting: 'عرض',
+      alreadySaved: 'هذه الفاتورة حُفظت بالفعل (لم تُحفظ مرة ثانية).',
+      savedVerified: 'تم الحفظ بحالة «تم التحقق».', savedNeedsReview: 'تم الحفظ بحالة «يحتاج مراجعة» لأن بعض القيم غير مؤكدة.',
+      savedConfirmed: 'تم الحفظ بحالة «مؤكد مع ملاحظات».',
+      leaveTitle: 'تجاهل هذه الفاتورة؟', leaveBody: 'لن يتم حفظ البيانات المستخرجة.', discard: 'تجاهل', keep: 'متابعة المراجعة',
+      noInvoices: 'لا توجد فواتير بعد.', countOf: '{n} فاتورة', loading: 'جارٍ التحميل…',
+      geminiOn: 'المحرك الحالي: Gemini (قراءة الجداول مباشرة من الصورة).', geminiOff: 'المحرك الحالي: التعرف الضوئي في Google Drive (مجاني).',
+      geminiInfo: 'Gemini يقرأ الجداول بدقة أعلى. خطته المجانية محدودة الاستخدام وقد تستخدم Google المحتوى لتحسين خدماتها. المفتاح يُحفظ على الخادم فقط ولا يظهر في الصفحة.',
+      noText: 'لم يُعثر على نص في الصورة. جرّب صورة أوضح.', geminiFailed: 'تعذّر استخدام Gemini، فاستُخدم التعرف الضوئي في Drive.',
+      error: 'حدث خطأ', retry: 'إعادة المحاولة', issuesTitle: 'الملاحظات', statusLbl: 'الحالة', engineLbl: 'المحرك',
+      createdLbl: 'أُنشئت', updatedLbl: 'عُدّلت', idLbl: 'المعرّف', noImage: 'لا توجد صورة', ocrAuto: 'تلقائي',
+      fixFirst: 'أكمل الحقول المطلوبة أولًا: {f}',
+      i_missing: '{f}: قيمة مفقودة', i_type_missing: 'اختر نوع المستند', i_date_invalid: 'التاريخ غير صالح',
+      i_date_future: 'التاريخ في المستقبل', i_date_old: 'التاريخ قديم جدًا', i_negative_total: 'الإجمالي سالب',
+      i_uncertain: '{f}: قيمة غير مؤكدة، راجعها', i_item_no_description: 'البند {i}: بلا وصف',
+      i_item_uncertain: 'البند {i}: قراءة غير مؤكدة', i_item_total_mismatch: 'البند {i}: الكمية × السعر = {expected} لكن المطبوع {printed}',
+      i_item_no_amount: 'البند {i}: لا يوجد مبلغ', i_tax_rate_invalid: 'البند {i}: نسبة ضريبة غير صالحة',
+      i_item_tax_mismatch: 'البند {i}: الضريبة المحسوبة {expected} والمطبوعة {printed}',
+      i_items_vs_subtotal: 'مجموع البنود {expected} لا يطابق المجموع المطبوع {printed}',
+      i_items_vs_total: 'مجموع البنود {expected} لا يطابق الإجمالي المطبوع {printed}',
+      i_totals_mismatch: 'المجموع − الخصم + الضريبة = {expected} لكن الإجمالي المطبوع {printed}',
+      i_tax_sum_mismatch: 'مجموع ضرائب البنود {expected} لا يطابق الضريبة {printed}',
+      i_paid_exceeds_total: 'المبلغ المدفوع أكبر من الإجمالي', i_no_items: 'لم يُستخرج أي بند'
+    },
+    en: {
+      appTitle: 'Invoice Scanner', capture: 'Capture invoice', captureHint: 'Open the camera and take a clear photo',
+      pick: 'Select image', pickHint: 'From your gallery, or a PDF', history: 'History', historyHint: 'Saved invoices and search',
+      home: 'Home', settings: 'Settings', recent: 'Recent invoices', procHint: 'This can take up to a minute.',
+      preparing: 'Preparing image…', uploading: 'Uploading and extracting data…',
+      invoiceDetails: 'Invoice details', items: 'Line items', addItem: 'Item', checks: 'Totals check',
+      itemsHint: 'Yellow rows are uncertain, red rows do not add up. Edit a value or tap ✓ to confirm it.',
+      rawText: 'Extracted text (for comparison)', confirmIssues: 'I have checked the flagged values and confirm them as they are.',
+      cancel: 'Cancel', save: 'Save invoice', saving: 'Saving…', openImage: 'Open original image in Google Drive',
+      searchPh: 'Search supplier, customer, invoice no…', refresh: 'Refresh', allTypes: 'All types', allStatus: 'All statuses',
+      uiLanguage: 'App language', ocrLanguage: 'Invoice language (OCR hint)', ownerName: 'Your business name (to recognise sales invoices)',
+      engine: 'Extraction engine', geminiKey: 'Gemini API key (optional)', removeKey: 'Remove key', saveSettings: 'Save',
+      storage: 'Storage', saved: 'Saved', edit: 'Edit', back: 'Back',
+      type: 'Type', invoiceNumber: 'Invoice no.', date: 'Date', partyName_purchase: 'Supplier',
+      partyName_sales: 'Customer', partyName_expense: 'Shop / vendor', partyName_payment: 'Received from / payer',
+      partyTaxId: 'Tax ID / NIF', currency: 'Currency', subtotal: 'Subtotal', discountTotal: 'Discount',
+      taxTotal: 'Tax', total: 'Total', amountPaid: 'Amount paid', paymentMethod: 'Payment method', notes: 'Notes',
+      description: 'Description', quantity: 'Qty', unit: 'Unit', unitPrice: 'Unit price', discount: 'Disc.',
+      taxRate: 'Tax %', taxAmount: 'Tax amt', lineTotal: 'Line total', calculated: 'Calculated',
+      t_purchase: 'Purchase invoice', t_sales: 'Sales invoice', t_expense: 'Expense receipt', t_payment: 'Payment receipt',
+      pm_: '—', pm_cash: 'Cash', pm_card: 'Card', pm_transfer: 'Transfer', pm_cheque: 'Cheque',
+      uncertain: 'Uncertain ✓', missingBadge: 'Missing', confirmed: 'Confirmed',
+      itemsSum: 'Sum of items', printedSubtotal: 'Printed subtotal', expectedTotal: 'Calculated total', printedTotal: 'Printed total',
+      calcCol: 'Calculated', printedCol: 'Printed',
+      noIssues: 'No issues: the data is consistent.', nErrors: '{n} problem(s) to review', nWarnings: '{n} uncertain value(s)',
+      st_Verified: 'Verified', 'st_Confirmed with issues': 'Confirmed with issues', 'st_Needs review': 'Needs review',
+      dupTitle: 'This invoice may already be saved', dupSameImage: 'Same image', dupSameDetails: 'Same details',
+      dupSameNumber: 'Same number and party', saveAnyway: 'Save anyway', viewExisting: 'View',
+      alreadySaved: 'This invoice was already saved (not saved twice).',
+      savedVerified: 'Saved as "Verified".', savedNeedsReview: 'Saved as "Needs review" because some values are uncertain.',
+      savedConfirmed: 'Saved as "Confirmed with issues".',
+      leaveTitle: 'Discard this invoice?', leaveBody: 'The extracted data will not be saved.', discard: 'Discard', keep: 'Keep reviewing',
+      noInvoices: 'No invoices yet.', countOf: '{n} invoice(s)', loading: 'Loading…',
+      geminiOn: 'Current engine: Gemini (reads tables directly from the image).', geminiOff: 'Current engine: Google Drive OCR (free).',
+      geminiInfo: 'Gemini reads tables much more accurately. Its free tier has usage limits and Google may use free-tier content to improve its products. The key is stored on the server only and never shown in the page.',
+      noText: 'No text was found in the image. Try a sharper photo.', geminiFailed: 'Gemini was unavailable, so Drive OCR was used.',
+      error: 'Something went wrong', retry: 'Retry', issuesTitle: 'Issues', statusLbl: 'Status', engineLbl: 'Engine',
+      createdLbl: 'Created', updatedLbl: 'Updated', idLbl: 'ID', noImage: 'No image', ocrAuto: 'Automatic',
+      fixFirst: 'Fill in the required fields first: {f}',
+      i_missing: '{f}: missing', i_type_missing: 'Choose the document type', i_date_invalid: 'The date is not valid',
+      i_date_future: 'The date is in the future', i_date_old: 'The date is very old', i_negative_total: 'The total is negative',
+      i_uncertain: '{f}: uncertain, please check', i_item_no_description: 'Item {i}: no description',
+      i_item_uncertain: 'Item {i}: uncertain reading', i_item_total_mismatch: 'Item {i}: qty × price = {expected} but {printed} is printed',
+      i_item_no_amount: 'Item {i}: no amount', i_tax_rate_invalid: 'Item {i}: invalid tax rate',
+      i_item_tax_mismatch: 'Item {i}: calculated tax {expected}, printed {printed}',
+      i_items_vs_subtotal: 'Items add up to {expected}, printed subtotal is {printed}',
+      i_items_vs_total: 'Items add up to {expected}, printed total is {printed}',
+      i_totals_mismatch: 'Subtotal − discount + tax = {expected}, printed total is {printed}',
+      i_tax_sum_mismatch: 'Item taxes add up to {expected}, printed tax is {printed}',
+      i_paid_exceeds_total: 'Amount paid is more than the total', i_no_items: 'No line items were extracted'
+    }
+  };
+
+  var LS = {
+    get: function (k, d) { try { var v = localStorage.getItem('is_' + k); return v === null ? d : v; } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem('is_' + k, v); } catch (e) { /* private mode */ } }
+  };
+
+  var state = {
+    lang: LS.get('lang', 'ar') === 'en' ? 'en' : 'ar',
+    ocrLang: LS.get('ocrLang', 'auto'),
+    boot: null,
+    screen: 'home',
+    stack: [],
+    review: null,      // {requestId, invoiceId?, draft, imageFileId, imageHash, engine, preview, dirty}
+    saving: false,
+    validateTimer: null
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  function t(key, params) {
+    var s = (T[state.lang] && T[state.lang][key]) || T.en[key] || key;
+    if (params) Object.keys(params).forEach(function (k) { s = s.split('{' + k + '}').join(params[k]); });
+    return s;
+  }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmt(n, cur) {
+    if (n === null || n === undefined || n === '' || !isFinite(n)) return '—';
+    var s = Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+    return cur ? s + ' ' + cur : s;
+  }
+  function numText(v) {
+    return v === null || v === undefined || v === '' ? '' : String(v);
+  }
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+  }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+  // ---------- Server calls ----------
+  function call(fn, arg, retries) {
+    return new Promise(function (resolve, reject) {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(function (err) {
+          var msg = (err && err.message) || String(err);
+          // Network hiccups are retried; the server ignores repeated request IDs.
+          if ((retries || 0) > 0 && /network|NetworkError|timed out|Failed to fetch|503/i.test(msg)) {
+            setTimeout(function () { call(fn, arg, retries - 1).then(resolve, reject); }, 1500);
+          } else {
+            reject(new Error(msg));
+          }
+        })[fn](arg);
+    });
+  }
+
+  // ---------- UI helpers ----------
+  function toast(msg, ms) {
+    var el = $('toast');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { el.classList.add('hidden'); }, ms || 3500);
+  }
+  function modal(html, bind) {
+    $('modal').innerHTML = html;
+    $('modalBack').classList.remove('hidden');
+    if (bind) bind($('modal'));
+  }
+  function closeModal() { $('modalBack').classList.add('hidden'); $('modal').innerHTML = ''; }
+  $('modalBack').addEventListener('click', function (e) { if (e.target === $('modalBack')) closeModal(); });
+
+  function applyLang() {
+    document.documentElement.lang = state.lang;
+    document.documentElement.dir = state.lang === 'ar' ? 'rtl' : 'ltr';
+    $('langBtn').textContent = state.lang === 'ar' ? 'EN' : 'ع';
+    document.querySelectorAll('[data-t]').forEach(function (el) { el.textContent = t(el.getAttribute('data-t')); });
+    document.querySelectorAll('[data-tp]').forEach(function (el) { el.placeholder = t(el.getAttribute('data-tp')); });
+    $('backBtn').innerHTML = state.lang === 'ar' ? '&#8594;' : '&#8592;';
+    $('sLang').value = state.lang;
+    fillSelect($('fType'), [['', t('allTypes')]].concat(Shared.INVOICE_TYPES.map(function (x) { return [x, t('t_' + x)]; })), $('fType').value);
+    fillSelect($('fStatus'), [['', t('allStatus')], ['Needs review', t('st_Needs review')],
+      ['Confirmed with issues', t('st_Confirmed with issues')], ['Verified', t('st_Verified')]], $('fStatus').value);
+    fillSelect($('sOcrLang'), [['auto', t('ocrAuto')], ['ar', 'العربية'], ['fr', 'Français'], ['en', 'English']], state.ocrLang);
+    setTitle();
+    if (state.screen === 'review' && state.review) renderReview();
+    if (state.screen === 'details' && state.details) renderDetails(state.details);
+    if (state.screen === 'settings') renderSettings();
+  }
+  function fillSelect(sel, opts, value) {
+    sel.innerHTML = opts.map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>'; }).join('');
+    if (value !== undefined) sel.value = value;
+  }
+  function setTitle() {
+    var titles = { home: t('appTitle'), processing: t('appTitle'), review: t('invoiceDetails'), history: t('history'),
+      details: t('invoiceDetails'), settings: t('settings') };
+    $('title').textContent = titles[state.screen] || t('appTitle');
+  }
+
+  function show(screen, push) {
+    if (push !== false && state.screen !== screen) state.stack.push(state.screen);
+    state.screen = screen;
+    document.querySelectorAll('.screen').forEach(function (s) { s.classList.add('hidden'); });
+    $('screen-' + screen).classList.remove('hidden');
+    document.querySelectorAll('.tabbar button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-nav') === screen);
+    });
+    $('backBtn').classList.toggle('hidden', screen === 'home');
+    setTitle();
+    window.scrollTo(0, 0);
+  }
+  function goBack() {
+    if (state.screen === 'review') return confirmLeave(function () { state.review = null; show(state.stack.pop() || 'home', false); });
+    if (state.screen === 'processing') return;
+    show(state.stack.pop() || 'home', false);
+  }
+  function confirmLeave(done) {
+    if (!state.review) return done();
+    modal('<h3>' + esc(t('leaveTitle')) + '</h3><p>' + esc(t('leaveBody')) + '</p><div class="row">' +
+      '<button class="btn grow" id="mKeep">' + esc(t('keep')) + '</button>' +
+      '<button class="btn danger grow" id="mDiscard">' + esc(t('discard')) + '</button></div>', function () {
+      $('mKeep').onclick = closeModal;
+      $('mDiscard').onclick = function () { closeModal(); done(); };
+    });
+  }
+
+  // ---------- Image capture ----------
+  function readAsDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(r.result); };
+      r.onerror = function () { reject(r.error); };
+      r.readAsDataURL(blob);
+    });
+  }
+  function loadImage(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('Unsupported image')); };
+      img.src = url;
+    });
+  }
+  /** Shrinks large photos (keeps text readable) and always outputs JPEG. */
+  function prepareFile(file) {
+    if (file.type === 'application/pdf') {
+      return readAsDataUrl(file).then(function (d) { return { dataUrl: d, mimeType: 'application/pdf', preview: '' }; });
+    }
+    return loadImage(file).then(function (img) {
+      var max = 2200;
+      var w = img.naturalWidth, h = img.naturalHeight;
+      var scale = Math.min(1, max / Math.max(w, h));
+      var c = document.createElement('canvas');
+      c.width = Math.round(w * scale); c.height = Math.round(h * scale);
+      var ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      var dataUrl = c.toDataURL('image/jpeg', 0.88);
+      return { dataUrl: dataUrl, mimeType: 'image/jpeg', preview: dataUrl };
+    });
+  }
+
+  function onFileChosen(input) {
+    var file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    var requestId = uuid();
+    $('procStep').textContent = t('preparing');
+    $('procPreview').removeAttribute('src');
+    show('processing');
+    prepareFile(file).then(function (p) {
+      if (p.preview) $('procPreview').src = p.preview;
+      $('procStep').textContent = t('uploading');
+      return call('apiExtract', {
+        requestId: requestId, data: p.dataUrl.split(',')[1], mimeType: p.mimeType,
+        fileName: file.name, langHint: state.ocrLang
+      }, 2).then(function (res) {
+        startReview(res, p.preview);
+      });
+    }).catch(function (e) {
+      show('home', false);
+      modal('<h3>' + esc(t('error')) + '</h3><p>' + esc(e.message) + '</p><button class="btn primary" id="mOk">OK</button>',
+        function () { $('mOk').onclick = closeModal; });
+    });
+  }
+
+  // ---------- Review ----------
+  function startReview(res, preview) {
+    var d = res.draft;
+    d.items = d.items || [];
+    state.review = {
+      requestId: res.requestId, invoiceId: null, draft: d, imageFileId: res.imageFileId,
+      imageUrl: res.imageUrl, imageHash: res.imageHash, engine: res.engine, preview: preview,
+      duplicates: res.duplicates || [], warnings: res.warnings || []
+    };
+    $('confirmIssues').checked = false;
+    show('review', false);
+    state.stack = ['home'];
+    renderReview();
+    if (res.warnings && res.warnings.indexOf('no_text') >= 0) toast(t('noText'), 6000);
+    if (res.warnings && res.warnings.indexOf('gemini_failed') >= 0) toast(t('geminiFailed'), 6000);
+  }
+
+  function editInvoice(inv) {
+    state.review = {
+      requestId: uuid(), invoiceId: inv.invoiceId,
+      draft: { header: clone(inv.header), items: clone(inv.items), confidence: {}, rawText: '' },
+      imageFileId: '', imageUrl: inv.imageUrl, imageHash: '', engine: inv.engine,
+      preview: inv.thumbnail || '', duplicates: [], warnings: []
+    };
+    (inv.uncertainFields || []).forEach(function (f) { state.review.draft.confidence[f] = 'low'; });
+    $('confirmIssues').checked = false;
+    show('review');
+    renderReview();
+  }
+
+  var HEADER_LAYOUT = [
+    ['type', 'select'], ['date', 'date'], ['invoiceNumber', 'text'],
+    ['partyName', 'text', 'full'], ['partyTaxId', 'text'], ['currency', 'text'],
+    ['subtotal', 'num'], ['discountTotal', 'num'], ['taxTotal', 'num'], ['total', 'num'],
+    ['amountPaid', 'num'], ['paymentMethod', 'select'], ['notes', 'textarea', 'full']
+  ];
+  var ITEM_COLS = ['description', 'quantity', 'unit', 'unitPrice', 'discount', 'taxRate', 'taxAmount', 'lineTotal'];
+
+  function fieldLabel(f) {
+    if (f === 'partyName') return t('partyName_' + (state.review ? state.review.draft.header.type : 'purchase'));
+    return t(f);
+  }
+
+  function renderReview() {
+    var r = state.review;
+    var d = r.draft;
+    var h = d.header;
+    var conf = d.confidence || (d.confidence = {});
+    $('engineBadge').textContent = r.engine === 'gemini' ? 'Gemini' : 'Drive OCR';
+    if (r.preview) { $('reviewPreview').src = r.preview; $('reviewPreview').classList.remove('hidden'); }
+    else $('reviewPreview').classList.add('hidden');
+    if (r.imageUrl) { $('reviewImageLink').href = r.imageUrl; $('reviewImageLink').classList.remove('hidden'); }
+    else $('reviewImageLink').classList.add('hidden');
+
+    $('headerForm').innerHTML = HEADER_LAYOUT.map(function (def) {
+      var f = def[0], kind = def[1];
+      var c = conf[f];
+      var cls = 'field' + (def[2] ? ' full' : '') + (c === 'low' ? ' conf-low' : '') +
+        (c === 'missing' && (f === 'total' || f === 'date' || f === 'partyName') ? ' conf-missing' : '');
+      var badge = c === 'low' ? '<button type="button" class="badge warn" data-confirm="' + f + '">' + esc(t('uncertain')) + '</button>' : '';
+      var v = h[f];
+      var input;
+      if (f === 'type') {
+        input = '<select data-h="type">' + Shared.INVOICE_TYPES.map(function (x) {
+          return '<option value="' + x + '"' + (v === x ? ' selected' : '') + '>' + esc(t('t_' + x)) + '</option>';
+        }).join('') + '</select>';
+      } else if (f === 'paymentMethod') {
+        input = '<select data-h="paymentMethod">' + ['', 'cash', 'card', 'transfer', 'cheque'].map(function (x) {
+          return '<option value="' + x + '"' + ((v || '') === x ? ' selected' : '') + '>' + esc(t('pm_' + x)) + '</option>';
+        }).join('') + '</select>';
+      } else if (kind === 'textarea') {
+        input = '<textarea data-h="' + f + '">' + esc(v) + '</textarea>';
+      } else if (kind === 'date') {
+        input = '<input type="date" data-h="date" value="' + esc(v) + '">';
+      } else if (kind === 'num') {
+        input = '<input type="text" inputmode="decimal" class="num" data-h="' + f + '" value="' + esc(numText(v)) + '">';
+      } else {
+        input = '<input type="text" data-h="' + f + '" value="' + esc(v) + '"' +
+          (f === 'currency' ? ' list="curList" maxlength="3" style="text-transform:uppercase" class="ltr"' : '') +
+          (f === 'invoiceNumber' || f === 'partyTaxId' ? ' class="ltr" dir="auto"' : ' dir="auto"') + '>';
+      }
+      return '<div class="' + cls + '" id="fld-' + f + '"><label><span>' + esc(fieldLabel(f)) + '</span>' + badge + '</label>' + input + '</div>';
+    }).join('') + '<datalist id="curList">' + ['DZD', 'EUR', 'USD', 'SAR', 'AED', 'MAD', 'TND', 'EGP', 'QAR', 'KWD', 'GBP']
+      .map(function (c) { return '<option value="' + c + '">'; }).join('') + '</datalist>';
+
+    renderItems();
+    if (d.rawText) { $('rawText').textContent = d.rawText; $('rawTextCard').classList.remove('hidden'); }
+    else $('rawTextCard').classList.add('hidden');
+    renderDuplicates(r.duplicates);
+    validateNow();
+  }
+
+  function renderItems() {
+    var items = state.review.draft.items;
+    $('itemCount').textContent = items.length;
+    var head = '<thead><tr><th>#</th>' + ITEM_COLS.map(function (c) { return '<th>' + esc(t(c)) + '</th>'; }).join('') +
+      '<th>' + esc(t('calculated')) + '</th><th></th></tr></thead>';
+    var body = items.map(function (it, i) {
+      return '<tr data-row="' + i + '" class="' + (it.confidence === 'low' ? 'low' : '') + '"><td class="idx">' + (i + 1) +
+        (it.confidence === 'low' ? '<br><button type="button" class="badge warn" data-confirm-row="' + i + '">✓</button>' : '') + '</td>' +
+        ITEM_COLS.map(function (c) {
+          var isNum = Shared.NUMERIC_ITEM_FIELDS.indexOf(c) >= 0;
+          return '<td><input class="cell ' + (c === 'description' ? 'desc' : 'n') + (isNum ? ' num' : '') + '"' +
+            (isNum ? ' inputmode="decimal"' : ' dir="auto"') + ' data-i="' + i + '" data-c="' + c + '" value="' +
+            esc(isNum ? numText(it[c]) : it[c]) + '"></td>';
+        }).join('') +
+        '<td class="calc" id="calc-' + i + '"></td>' +
+        '<td><button type="button" class="icon-btn" data-del="' + i + '" aria-label="delete">&#128465;</button></td></tr>';
+    }).join('');
+    $('itemsTable').innerHTML = head + '<tbody>' + body + '</tbody>';
+  }
+
+  function renderDuplicates(dups) {
+    if (!dups || !dups.length) { $('dupBox').innerHTML = ''; return; }
+    var reasons = { same_image: t('dupSameImage'), same_details: t('dupSameDetails'), same_number: t('dupSameNumber') };
+    $('dupBox').innerHTML = '<div class="banner error"><strong>' + esc(t('dupTitle')) + '</strong><ul style="margin:6px 0 0;padding-inline-start:18px">' +
+      dups.map(function (d) {
+        return '<li>' + esc(reasons[d.reason]) + ': ' + esc(d.partyName) + ' · <span class="ltr">' + esc(d.invoiceNumber) + '</span> · ' +
+          esc(d.date) + ' · ' + esc(fmt(d.total, d.currency)) + ' <a href="#" data-open="' + esc(d.invoiceId) + '">' + esc(t('viewExisting')) + '</a></li>';
+      }).join('') + '</ul></div>';
+  }
+
+  function scheduleValidate() {
+    clearTimeout(state.validateTimer);
+    state.validateTimer = setTimeout(validateNow, 250);
+  }
+
+  function validateNow() {
+    var r = state.review;
+    if (!r) return;
+    var copy = clone(r.draft);
+    var v = Shared.validateDraft(copy, { today: state.boot ? state.boot.today : undefined });
+    r.validation = v;
+    var h = copy.header;
+    var cur = h.currency || '';
+
+    // Per-row calculated totals.
+    copy.items.forEach(function (it, i) {
+      var cell = $('calc-' + i);
+      if (!cell) return;
+      var calc = Shared.computeLine(it);
+      var bad = v.issues.some(function (x) { return x.item === i && x.code === 'item_total_mismatch'; });
+      cell.textContent = calc === null ? '—' : fmt(calc);
+      cell.className = 'calc' + (bad ? ' bad' : '');
+      var tr = cell.parentNode;
+      tr.classList.toggle('bad', bad);
+    });
+    document.querySelectorAll('#headerForm .field').forEach(function (el) { el.classList.remove('has-error'); });
+    v.issues.forEach(function (x) {
+      if (x.level === 'error' && x.field && x.item === undefined) {
+        var el = $('fld-' + x.field);
+        if (el) el.classList.add('has-error');
+      }
+    });
+
+    // Totals panel.
+    var rows = [];
+    var sumItems = v.computed.itemsSum;
+    var disc = Shared.isNum(h.discountTotal) ? h.discountTotal : 0;
+    var tax = Shared.isNum(h.taxTotal) ? h.taxTotal : 0;
+    rows.push('<span class="h"></span><span class="h num">' + esc(t('calcCol')) + '</span><span class="h num">' + esc(t('printedCol')) + '</span>');
+    rows.push('<span>' + esc(t('itemsSum')) + ' / ' + esc(t('subtotal')) + '</span><span class="num">' + fmt(sumItems) + '</span><span class="num">' + fmt(h.subtotal) + '</span>');
+    var base = Shared.isNum(h.subtotal) ? h.subtotal : sumItems;
+    var expTotal = Shared.isNum(base) ? Shared.round2(base - disc + tax) : null;
+    rows.push('<span>' + esc(t('total')) + '</span><span class="num">' + fmt(expTotal) + '</span><span class="num"><strong>' + fmt(h.total, cur) + '</strong></span>');
+    $('totalsBox').innerHTML = rows.join('');
+
+    // Issues list and banner.
+    $('issuesList').innerHTML = v.issues.map(function (x, n) {
+      return '<li class="' + x.level + '" data-issue="' + n + '">' + esc(issueText(x)) + '</li>';
+    }).join('');
+    var banner = $('reviewBanner');
+    if (!v.issues.length) banner.innerHTML = '<div class="banner ok">' + esc(t('noIssues')) + '</div>';
+    else banner.innerHTML = '<div class="banner ' + (v.errors ? 'error' : 'warn') + '">' +
+      [v.errors ? t('nErrors', { n: v.errors }) : '', v.warnings ? t('nWarnings', { n: v.warnings }) : ''].filter(String).join(' · ') + '</div>';
+    $('confirmWrap').classList.toggle('hidden', !v.issues.length);
+    $('saveBtn').disabled = state.saving;
+  }
+
+  function issueText(x) {
+    var p = { f: x.field ? fieldLabel(x.field) : '', i: x.item !== undefined ? x.item + 1 : '' };
+    if (x.params) Object.keys(x.params).forEach(function (k) { p[k] = fmt(x.params[k]); });
+    return t('i_' + x.code, p);
+  }
+
+  function onReviewInput(e) {
+    var el = e.target;
+    var r = state.review;
+    if (!r) return;
+    if (el.hasAttribute('data-h')) {
+      var f = el.getAttribute('data-h');
+      var val = el.value;
+      if (f === 'currency') val = val.toUpperCase();
+      r.draft.header[f] = val;
+      if (r.draft.confidence[f] === 'low' || r.draft.confidence[f] === 'missing') {
+        r.draft.confidence[f] = 'user';
+        var wrap = $('fld-' + f);
+        if (wrap) {
+          wrap.classList.remove('conf-low', 'conf-missing');
+          var b = wrap.querySelector('[data-confirm]'); if (b) b.remove();
+        }
+      }
+      if (f === 'type') {
+        var lbl = $('fld-partyName'); if (lbl) lbl.querySelector('label span').textContent = fieldLabel('partyName');
+      }
+      scheduleValidate();
+    } else if (el.hasAttribute('data-c')) {
+      var i = +el.getAttribute('data-i');
+      var c = el.getAttribute('data-c');
+      var it = r.draft.items[i];
+      it[c] = el.value;
+      if (it.confidence === 'low') {
+        it.confidence = 'user';
+        var tr = el.closest('tr'); tr.classList.remove('low');
+        var bb = tr.querySelector('[data-confirm-row]'); if (bb) bb.remove();
+      }
+      scheduleValidate();
+    }
+  }
+
+  function onReviewClick(e) {
+    var el = e.target.closest('[data-confirm],[data-confirm-row],[data-del],[data-issue],[data-open]');
+    if (!el || !state.review) return;
+    var r = state.review;
+    if (el.hasAttribute('data-confirm')) {
+      var f = el.getAttribute('data-confirm');
+      r.draft.confidence[f] = 'user';
+      $('fld-' + f).classList.remove('conf-low');
+      el.remove();
+      validateNow();
+    } else if (el.hasAttribute('data-confirm-row')) {
+      var i = +el.getAttribute('data-confirm-row');
+      r.draft.items[i].confidence = 'user';
+      el.closest('tr').classList.remove('low');
+      el.remove();
+      validateNow();
+    } else if (el.hasAttribute('data-del')) {
+      r.draft.items.splice(+el.getAttribute('data-del'), 1);
+      renderItems();
+      validateNow();
+    } else if (el.hasAttribute('data-issue')) {
+      var x = r.validation.issues[+el.getAttribute('data-issue')];
+      var target = x.item !== undefined ?
+        document.querySelector('[data-i="' + x.item + '"][data-c="' + (x.field || 'description') + '"]') :
+        (x.field ? document.querySelector('[data-h="' + x.field + '"]') : null);
+      if (target) { target.scrollIntoView({ block: 'center', behavior: 'smooth' }); target.focus({ preventScroll: true }); }
+    } else if (el.hasAttribute('data-open')) {
+      e.preventDefault();
+      openDetails(el.getAttribute('data-open'));
+    }
+  }
+
+  function addItem() {
+    state.review.draft.items.push({ description: '', quantity: '', unit: '', unitPrice: '', discount: '',
+      taxRate: '', taxAmount: '', lineTotal: '', confidence: 'user' });
+    renderItems();
+    validateNow();
+    var last = document.querySelector('[data-i="' + (state.review.draft.items.length - 1) + '"][data-c="description"]');
+    if (last) last.focus();
+  }
+
+  function save(confirmDuplicate) {
+    var r = state.review;
+    if (!r || state.saving) return;
+    var h = r.draft.header;
+    if (!h.type) { toast(t('fixFirst', { f: t('type') })); return; }
+    state.saving = true;
+    $('saveBtn').disabled = true;
+    $('saveBtn').textContent = t('saving');
+    var payload = {
+      requestId: r.requestId, invoiceId: r.invoiceId, draft: clone(r.draft), imageFileId: r.imageFileId,
+      imageHash: r.imageHash, engine: r.engine, confirmIssues: $('confirmIssues').checked,
+      confirmDuplicate: !!confirmDuplicate
+    };
+    payload.draft.rawText = '';
+    call('apiSave', payload, 2).then(function (res) {
+      state.saving = false;
+      $('saveBtn').textContent = t('save');
+      $('saveBtn').disabled = false;
+      if (!res.saved && res.duplicates) {
+        r.duplicates = res.duplicates;
+        renderDuplicates(res.duplicates);
+        modal('<h3>' + esc(t('dupTitle')) + '</h3>' + $('dupBox').innerHTML + '<div class="row">' +
+          '<button class="btn grow" id="mCancel">' + esc(t('cancel')) + '</button>' +
+          '<button class="btn danger grow" id="mSave">' + esc(t('saveAnyway')) + '</button></div>', function (m) {
+          $('mCancel').onclick = closeModal;
+          $('mSave').onclick = function () { closeModal(); save(true); };
+          m.addEventListener('click', function (ev) {
+            var a = ev.target.closest('[data-open]');
+            if (a) { ev.preventDefault(); closeModal(); openDetails(a.getAttribute('data-open')); }
+          });
+        });
+        return;
+      }
+      var msg = res.alreadySaved ? t('alreadySaved') :
+        res.reviewStatus === 'Verified' ? t('savedVerified') :
+        res.reviewStatus === 'Confirmed with issues' ? t('savedConfirmed') : t('savedNeedsReview');
+      toast(msg, 5000);
+      state.review = null;
+      state.stack = ['home'];
+      openDetails(res.invoiceId, true);
+      loadRecent();
+    }).catch(function (e) {
+      state.saving = false;
+      $('saveBtn').textContent = t('save');
+      $('saveBtn').disabled = false;
+      modal('<h3>' + esc(t('error')) + '</h3><p>' + esc(e.message) + '</p><div class="row">' +
+        '<button class="btn grow" id="mOk">OK</button><button class="btn primary grow" id="mRetry">' + esc(t('retry')) + '</button></div>', function () {
+        $('mOk').onclick = closeModal;
+        // Retrying reuses the same request ID, so it cannot create a second copy.
+        $('mRetry').onclick = function () { closeModal(); save(confirmDuplicate); };
+      });
+    });
+  }
+
+  // ---------- History ----------
+  function statusBadge(s) {
+    var cls = s === 'Verified' ? 'ok' : s === 'Needs review' ? 'err' : 'warn';
+    return '<span class="badge ' + cls + '">' + esc(t('st_' + s) || s) + '</span>';
+  }
+  function invCard(inv) {
+    return '<button type="button" class="inv" data-open="' + esc(inv.invoiceId) + '">' +
+      '<span class="party">' + esc(inv.partyName || '—') + '</span>' +
+      '<span class="amount num">' + esc(fmt(inv.total, inv.currency)) + '</span>' +
+      '<span class="meta">' + esc(t('t_' + inv.type)) + ' · <span class="ltr">' + esc(inv.invoiceNumber || '—') + '</span> · ' + esc(inv.date || '—') + '</span>' +
+      '<span>' + statusBadge(inv.reviewStatus) + '</span></button>';
+  }
+  function loadHistory() {
+    $('historyList').innerHTML = '<div class="empty">' + esc(t('loading')) + '</div>';
+    var f = { q: $('fQ').value, type: $('fType').value, status: $('fStatus').value, from: $('fFrom').value, to: $('fTo').value };
+    LS.set('filters', JSON.stringify(f));
+    call('apiList', f, 1).then(function (res) {
+      $('histCount').textContent = t('countOf', { n: res.total });
+      $('historyList').innerHTML = res.invoices.length ? res.invoices.map(invCard).join('') :
+        '<div class="empty">' + esc(t('noInvoices')) + '</div>';
+    }).catch(function (e) { $('historyList').innerHTML = '<div class="banner error">' + esc(e.message) + '</div>'; });
+  }
+  function loadRecent() {
+    call('apiList', { limit: 5 }, 1).then(function (res) {
+      $('recentList').innerHTML = res.invoices.length ? res.invoices.map(invCard).join('') :
+        '<div class="empty small">' + esc(t('noInvoices')) + '</div>';
+    }).catch(function () { $('recentList').innerHTML = ''; });
+  }
+
+  // ---------- Details ----------
+  function openDetails(id, replace) {
+    $('detailsBody').innerHTML = '<div class="empty">' + esc(t('loading')) + '</div>';
+    if (replace) { state.screen = 'details'; show('details', false); } else show('details');
+    call('apiGet', id, 1).then(function (inv) {
+      state.details = inv;
+      renderDetails(inv);
+    }).catch(function (e) { $('detailsBody').innerHTML = '<div class="banner error">' + esc(e.message) + '</div>'; });
+  }
+
+  function renderDetails(inv) {
+    var h = inv.header;
+    var cur = h.currency;
+    var kv = function (k, v, cls) { return '<dt>' + esc(k) + '</dt><dd' + (cls ? ' class="' + cls + '"' : '') + '>' + v + '</dd>'; };
+    var partyLbl = t('partyName_' + h.type);
+    var issues = inv.issues || [];
+    var html = '<div class="card"><div class="row" style="margin-bottom:10px"><h3 class="grow" style="margin:0">' + esc(h.partyName || '—') +
+      '</h3>' + statusBadge(inv.reviewStatus) + '</div><dl class="kv">' +
+      kv(t('type'), esc(t('t_' + h.type))) + kv(t('invoiceNumber'), '<span class="ltr">' + esc(h.invoiceNumber || '—') + '</span>') +
+      kv(t('date'), esc(h.date || '—')) + kv(partyLbl, esc(h.partyName || '—')) +
+      (h.partyTaxId ? kv(t('partyTaxId'), '<span class="ltr">' + esc(h.partyTaxId) + '</span>') : '') +
+      kv(t('currency'), esc(cur || '—')) +
+      kv(t('subtotal'), esc(fmt(h.subtotal)), 'num') + kv(t('discountTotal'), esc(fmt(h.discountTotal)), 'num') +
+      kv(t('taxTotal'), esc(fmt(h.taxTotal)), 'num') + kv(t('total'), '<strong>' + esc(fmt(h.total, cur)) + '</strong>', 'num') +
+      (h.amountPaid !== null ? kv(t('amountPaid'), esc(fmt(h.amountPaid)), 'num') : '') +
+      (h.paymentMethod ? kv(t('paymentMethod'), esc(t('pm_' + h.paymentMethod))) : '') +
+      (h.notes ? kv(t('notes'), esc(h.notes)) : '') +
+      kv(t('engineLbl'), esc(inv.engine === 'gemini' ? 'Gemini' : 'Drive OCR')) +
+      kv(t('createdLbl'), '<span class="ltr">' + esc((inv.createdAt || '').replace('T', ' ')) + '</span>') +
+      kv(t('idLbl'), '<span class="ltr small">' + esc(inv.invoiceId) + '</span>') +
+      '</dl></div>';
+    if (issues.length) {
+      html += '<div class="card"><h3>' + esc(t('issuesTitle')) + '</h3><ul class="issues">' + issues.map(function (x) {
+        return '<li class="' + x.level + '">' + esc(issueText(x)) + '</li>';
+      }).join('') + '</ul></div>';
+    }
+    html += '<div class="card"><h3>' + esc(t('items')) + ' (' + inv.items.length + ')</h3>';
+    if (inv.items.length) {
+      html += '<div class="table-wrap"><table class="items readonly"><thead><tr><th>#</th>' +
+        ITEM_COLS.map(function (c) { return '<th>' + esc(t(c)) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        inv.items.map(function (it, i) {
+          return '<tr class="' + (it.confidence === 'low' ? 'low' : '') + '"><td class="idx">' + (i + 1) + '</td>' + ITEM_COLS.map(function (c) {
+            var isNum = Shared.NUMERIC_ITEM_FIELDS.indexOf(c) >= 0;
+            var v = isNum ? (it[c] === null ? '' : (c === 'quantity' || c === 'taxRate' ? String(it[c]) : fmt(it[c]))) : it[c];
+            return '<td class="' + (isNum ? 'num' : '') + '" style="padding:8px 6px">' + esc(v) + '</td>';
+          }).join('') + '</tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    html += '</div><div class="card">' +
+      (inv.thumbnail ? '<img class="preview" src="' + esc(inv.thumbnail) + '" alt="">' : '') +
+      (inv.imageUrl ? '<p><a class="btn" href="' + esc(inv.imageUrl) + '" target="_blank" rel="noopener">&#128444; ' + esc(t('openImage')) + '</a></p>' :
+        '<p class="muted">' + esc(t('noImage')) + '</p>') +
+      '</div><div class="row"><button class="btn primary grow" id="editBtn" type="button">' + esc(t('edit')) + '</button></div>';
+    $('detailsBody').innerHTML = html;
+    $('editBtn').onclick = function () { editInvoice(inv); };
+  }
+
+  // ---------- Settings ----------
+  function renderSettings() {
+    var b = state.boot || {};
+    $('engineStatus').textContent = b.geminiConfigured ? t('geminiOn') : t('geminiOff');
+    $('clearKeyBtn').classList.toggle('hidden', !b.geminiConfigured);
+    $('sOwner').value = b.ownerBusinessName || '';
+    if (b.spreadsheetUrl) $('sheetLink').href = b.spreadsheetUrl;
+    if (b.folderUrl) $('folderLink').href = b.folderUrl;
+    $('whoami').textContent = b.email || '';
+  }
+  function saveSettings(clearKey) {
+    var s = { ownerBusinessName: $('sOwner').value.trim() };
+    if (clearKey) s.clearGeminiKey = true;
+    else if ($('sGeminiKey').value.trim()) s.geminiApiKey = $('sGeminiKey').value.trim();
+    $('saveSettingsBtn').disabled = true;
+    call('apiSaveSettings', s).then(function (res) {
+      $('sGeminiKey').value = '';
+      state.boot.geminiConfigured = res.geminiConfigured;
+      state.boot.ownerBusinessName = s.ownerBusinessName;
+      renderSettings();
+      toast(t('saved'));
+    }).catch(function (e) { toast(e.message, 6000); })
+      .then(function () { $('saveSettingsBtn').disabled = false; });
+  }
+
+  // ---------- Wiring ----------
+  $('captureBtn').onclick = function () { $('cameraInput').click(); };
+  $('pickBtn').onclick = function () { $('fileInput').click(); };
+  $('historyBtn').onclick = function () { show('history'); loadHistory(); };
+  $('cameraInput').onchange = function () { onFileChosen(this); };
+  $('fileInput').onchange = function () { onFileChosen(this); };
+  $('backBtn').onclick = goBack;
+  $('langBtn').onclick = function () { state.lang = state.lang === 'ar' ? 'en' : 'ar'; LS.set('lang', state.lang); applyLang(); };
+  $('sLang').onchange = function () { state.lang = this.value; LS.set('lang', state.lang); applyLang(); };
+  $('sOcrLang').onchange = function () { state.ocrLang = this.value; LS.set('ocrLang', state.ocrLang); };
+  $('saveSettingsBtn').onclick = function () { saveSettings(false); };
+  $('clearKeyBtn').onclick = function () { saveSettings(true); };
+  $('screen-review').addEventListener('input', onReviewInput);
+  $('screen-review').addEventListener('change', onReviewInput);
+  $('screen-review').addEventListener('click', onReviewClick);
+  $('addItemBtn').onclick = addItem;
+  $('saveBtn').onclick = function () { save(false); };
+  $('cancelReviewBtn').onclick = function () { confirmLeave(function () { state.review = null; state.stack = []; show('home', false); }); };
+  $('reviewPreview').onclick = function () { this.classList.toggle('zoom'); };
+  $('procPreview').onclick = function () { this.classList.toggle('zoom'); };
+  ['fType', 'fStatus', 'fFrom', 'fTo'].forEach(function (id) { $(id).onchange = loadHistory; });
+  var qTimer;
+  $('fQ').oninput = function () { clearTimeout(qTimer); qTimer = setTimeout(loadHistory, 350); };
+  $('refreshBtn').onclick = loadHistory;
+  document.addEventListener('click', function (e) {
+    var card = e.target.closest('.inv[data-open]');
+    if (card) openDetails(card.getAttribute('data-open'));
+  });
+  document.querySelectorAll('.tabbar button').forEach(function (b) {
+    b.onclick = function () {
+      var target = b.getAttribute('data-nav');
+      var go = function () {
+        state.review = null;
+        state.stack = target === 'home' ? [] : ['home'];
+        show(target, false);
+        if (target === 'history') loadHistory();
+        if (target === 'settings') renderSettings();
+        if (target === 'home') loadRecent();
+      };
+      if (state.screen === 'review') confirmLeave(go);
+      else if (state.screen !== 'processing') go();
+    };
+  });
+  window.addEventListener('beforeunload', function (e) {
+    if (state.review || state.saving) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  try {
+    var savedF = JSON.parse(LS.get('filters', '{}'));
+    $('fQ').value = savedF.q || '';
+    $('fFrom').value = savedF.from || '';
+    $('fTo').value = savedF.to || '';
+  } catch (e) { /* ignore */ }
+  applyLang();
+  show('home', false);
+  call('apiBootstrap', null, 2).then(function (b) {
+    state.boot = b;
+    renderSettings();
+  }).catch(function (e) { toast(e.message, 8000); });
+  loadRecent();
+})();
+</script>

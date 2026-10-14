@@ -1,0 +1,23 @@
+ACME SUPPLIES LTD
+Invoice No: INV-7781
+Invoice Date: 03 Oct 2026
+Bill To: Royal Crown School
+Description
+Qty
+Unit Price
+Amount
+A4 Paper Ream
+Whiteboard Marker
+Stapler
+10
+24
+3
+4.50
+1.25
+12.00
+45.00
+30.00
+36.00
+Subtotal 111.00
+VAT 5% 5.55
+Total USD 116.55

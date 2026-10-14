@@ -1,0 +1,11 @@
+{
+  "name": "invoice-scanner",
+  "private": true,
+  "description": "Invoice Scanner: Apps Script web app that turns invoice photos into Google Sheets rows.",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:ui": "node tests/ui-harness.js",
+    "push": "clasp push --force",
+    "deploy": "clasp push --force && clasp deploy --description \"Invoice Scanner\""
+  }
+}

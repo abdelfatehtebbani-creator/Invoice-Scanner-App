@@ -1,0 +1,15 @@
+SARL EL BARAKA DISTRIBUTION
+Zone industrielle, Sétif
+Tél: 036 12 34 56
+NIF: 000219012345678
+FACTURE N° FA-2026/0153
+Date : 12/10/2026
+Client : Tebbani Abdelfateh
+Désignation Qté P.U Montant
+Huile Elio 5L 4 1 250,00 5 000,00
+Sucre 1kg 10 135,00 1 350,00
+Café Facto 250g 6 320,50 1 923,00
+Total HT 8 273,00
+TVA 19% 1 571,87
+Total TTC 9 844,87
+Net à payer : 9 844,87 DA
