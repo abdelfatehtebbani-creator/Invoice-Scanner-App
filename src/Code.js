@@ -10,10 +10,10 @@ function doGet() {
   return t.evaluate()
     .setTitle(CONFIG.APP_NAME)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
+    // HtmlService only allows a few meta tags (viewport, *-web-app-capable, site verification).
     .addMetaTag('mobile-web-app-capable', 'yes')
     .addMetaTag('apple-mobile-web-app-capable', 'yes')
-    .addMetaTag('apple-mobile-web-app-title', 'Invoices')
-    .setFaviconUrl('https://fonts.gstatic.com/s/i/materialiconsoutlined/receipt_long/v6/24px.svg');
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
 }
 
 function include_(name) {
