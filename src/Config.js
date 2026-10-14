@@ -6,6 +6,7 @@
  */
 var CONFIG = {
   APP_NAME: 'Invoice Scanner',
+  ICON_URL: 'https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/receipt_long/default/48px.svg',
   SPREADSHEET_NAME: 'InvoiceScanner_Data',
   FOLDER_NAME: 'InvoiceScanner_Images',
   // Resources the owner created for this app. If one of them cannot be opened,

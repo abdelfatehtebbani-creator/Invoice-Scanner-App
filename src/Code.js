@@ -7,13 +7,20 @@
 function doGet() {
   ensureSetup_();
   var t = HtmlService.createTemplateFromFile('Index');
-  return t.evaluate()
+  var page = t.evaluate()
     .setTitle(CONFIG.APP_NAME)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
     // HtmlService only allows a few meta tags (viewport, *-web-app-capable, site verification).
     .addMetaTag('mobile-web-app-capable', 'yes')
     .addMetaTag('apple-mobile-web-app-capable', 'yes')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
+  try {
+    // Icon for the browser tab and the home-screen / desktop shortcut.
+    page.setFaviconUrl(CONFIG.ICON_URL);
+  } catch (e) {
+    console.warn('Favicon not accepted: ' + e.message);
+  }
+  return page;
 }
 
 function include_(name) {
