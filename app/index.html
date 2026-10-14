@@ -31,10 +31,12 @@
           <div class="field"><label data-t="setupCode"></label>
             <input id="setupCode" type="text" inputmode="numeric" autocomplete="one-time-code" class="num" maxlength="6"></div>
         </div>
-        <div class="field"><label id="pinLabel" data-t="pin"></label>
-          <input id="pinInput" type="password" inputmode="numeric" autocomplete="current-password" class="num" maxlength="8"></div>
-        <div class="field hidden" id="pin2Wrap"><label data-t="pinRepeat"></label>
-          <input id="pin2Input" type="password" inputmode="numeric" autocomplete="new-password" class="num" maxlength="8"></div>
+        <div class="field"><label data-t="username"></label>
+          <input id="userInput" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr"></div>
+        <div class="field"><label data-t="password"></label>
+          <input id="pinInput" type="password" autocomplete="current-password" dir="ltr"></div>
+        <div class="field hidden" id="pin2Wrap"><label data-t="passwordRepeat"></label>
+          <input id="pin2Input" type="password" autocomplete="new-password" dir="ltr"></div>
         <p class="banner error hidden" id="loginError"></p>
         <button class="btn primary" id="loginBtn" type="button" style="width:100%" data-t="signIn"></button>
       </div>
@@ -162,15 +164,15 @@
       <div class="card">
         <h3 data-t="security"></h3>
         <div class="grid">
-          <div class="field"><label data-t="currentPin"></label>
-            <input id="sCurPin" type="password" inputmode="numeric" class="num" maxlength="8" autocomplete="current-password"></div>
-          <div class="field"><label data-t="newPin"></label>
-            <input id="sNewPin" type="password" inputmode="numeric" class="num" maxlength="8" autocomplete="new-password"></div>
+          <div class="field"><label data-t="currentPassword"></label>
+            <input id="sCurPin" type="password" autocomplete="current-password" dir="ltr"></div>
+          <div class="field"><label data-t="newPassword"></label>
+            <input id="sNewPin" type="password" autocomplete="new-password" dir="ltr"></div>
         </div>
         <div class="row" style="margin-top:10px">
           <button class="btn danger small" id="signOutBtn" type="button" data-t="signOut"></button>
           <span class="grow"></span>
-          <button class="btn" id="changePinBtn" type="button" data-t="changePin"></button>
+          <button class="btn" id="changePinBtn" type="button" data-t="changePassword"></button>
         </div>
       </div>
       <div class="card">

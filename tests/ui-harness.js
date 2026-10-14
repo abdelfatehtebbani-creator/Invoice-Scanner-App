@@ -33,8 +33,8 @@ let sample = 'fr_facture.txt';
 const auth = { pin: null, token: 'tok-1' };
 const publicApi = {
   ping: () => ({ api: '2.0.0', setupNeeded: !auth.pin }),
-  'auth.setup': (p) => { if (p.setupCode !== '123456') throw { code: 'setup_code_wrong' }; auth.pin = p.pin; return { token: auth.token }; },
-  'auth.login': (p) => { if (p.pin !== auth.pin) throw { code: 'pin_wrong' }; return { token: auth.token }; }
+  'auth.setup': (p) => { if (p.setupCode !== '123456') throw { code: 'setup_code_wrong' }; auth.pin = p.username + ':' + p.password; return { token: auth.token }; },
+  'auth.login': (p) => { if (p.username + ':' + p.password !== auth.pin) throw { code: 'login_wrong' }; return { token: auth.token }; }
 };
 const routes = {
   'app.bootstrap': () => api.apiBootstrap(), 'invoices.extract': (p) => api.apiExtract(p), 'invoices.save': (p) => api.apiSave(p),
@@ -106,18 +106,19 @@ const api = {
   check('first run asks for setup code', await page.locator('#setupFields:not(.hidden)').count() === 1);
   await shot('00-setup');
   await page.fill('#setupCode', '111111');
-  await page.fill('#pinInput', '246810');
-  await page.fill('#pin2Input', '246810');
+  await page.fill('#userInput', 'abdou');
+  await page.fill('#pinInput', 'Secret#2026');
+  await page.fill('#pin2Input', 'Secret#2026');
   await page.click('#loginBtn');
   await page.waitForTimeout(400);
   check('wrong setup code rejected', await page.locator('#loginError:not(.hidden)').count() === 1 && !auth.pin);
   await page.fill('#setupCode', '123456');
-  await page.fill('#pinInput', '246810');
-  await page.fill('#pin2Input', '246810');
+  await page.fill('#pinInput', 'Secret#2026');
+  await page.fill('#pin2Input', 'Secret#2026');
   await page.click('#loginBtn');
   await page.waitForSelector('#screen-home:not(.hidden)');
   await page.waitForTimeout(300);
-  check('setup creates PIN and signs in', auth.pin === '246810');
+  check('setup creates the account and signs in', auth.pin === 'abdou:Secret#2026');
   await shot('01-home-ar');
   // A tiny real image for the file input.
   const img = path.join(OUT, 'invoice.png');
@@ -202,16 +203,17 @@ const api = {
   await shot('10-settings');
   await page.click('#signOutBtn');
   await page.waitForSelector('#screen-login:not(.hidden)');
-  check('sign out returns to PIN screen', await page.locator('#setupFields.hidden').count() === 1);
-  await page.fill('#pinInput', '000000');
+  check('sign out returns to sign-in screen with username kept', await page.locator('#setupFields.hidden').count() === 1 &&
+    await page.inputValue('#userInput') === 'abdou');
+  await page.fill('#pinInput', 'wrong-password');
   await page.click('#loginBtn');
   await page.waitForTimeout(400);
-  check('wrong PIN rejected', await page.locator('#loginError:not(.hidden)').count() === 1);
+  check('wrong password rejected', await page.locator('#loginError:not(.hidden)').count() === 1);
   await shot('09-login-wrong-pin');
-  await page.fill('#pinInput', '246810');
+  await page.fill('#pinInput', 'Secret#2026');
   await page.click('#loginBtn');
   await page.waitForSelector('#screen-home:not(.hidden)');
-  check('right PIN signs in', true);
+  check('right password signs in', true);
   const manifest = await page.evaluate(() => fetch('manifest.webmanifest').then((r) => r.json()));
   check('manifest has icons', manifest.icons.length === 3);
 

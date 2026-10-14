@@ -1,15 +1,16 @@
 /**
- * Owner sign-in for the PWA.
+ * Owner sign-in for the PWA (username + password).
  *
  * The web app must accept anonymous requests so the app hosted on GitHub Pages
  * can call it, so every data action requires a signed session token:
  *
  * - First run: the server writes a one-time setup code into the ProcessingLog
  *   sheet of the owner's private spreadsheet. Only someone who can open that
- *   spreadsheet can read it and choose the PIN.
- * - Sign-in: PIN (6-8 digits). Five wrong PINs lock sign-in for 15 minutes.
+ *   spreadsheet can read it and create the username and password.
+ * - Sign-in: username + password (8+ characters), stored only as a salted
+ *   HMAC-SHA256 hash. Five wrong attempts lock sign-in for 15 minutes.
  * - Token: "<issuedMs>.<expiresMs>.<HMAC-SHA256>", signed with a random secret
- *   kept in Script Properties. Changing the PIN invalidates older tokens.
+ *   kept in Script Properties. Changing the password invalidates older tokens.
  * Nothing secret is stored in the app's code.
  */
 var AUTH = {
@@ -44,12 +45,16 @@ function authSign_(text) {
   return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(text, authSecret_())).replace(/=+$/, '');
 }
 
-function authHashPin_(pin, salt) {
-  return authSign_('pin|' + salt + '|' + pin);
+function authHashPassword_(password, salt) {
+  return authSign_('pw|' + salt + '|' + password);
+}
+
+function authNormUser_(u) {
+  return String(u || '').trim().toLowerCase();
 }
 
 function authSetupNeeded_() {
-  return !authProps_().getProperty('PIN_HASH');
+  return !authProps_().getProperty('PW_HASH');
 }
 
 /**
@@ -79,13 +84,14 @@ function authFailed_() {
   if (tries >= AUTH.MAX_TRIES) {
     p.setProperty('LOCK_UNTIL', String(Date.now() + AUTH.LOCK_MINUTES * 60000));
     tries = 0;
-    logEvent_({ stage: 'login', status: 'LOCKED', message: 'Too many wrong PINs, sign-in locked' });
+    logEvent_({ stage: 'login', status: 'LOCKED', message: 'Too many wrong sign-in attempts, sign-in locked' });
   }
   p.setProperty('FAILED_TRIES', String(tries));
 }
 
-function authCheckPinFormat_(pin) {
-  if (!/^\d{6,8}$/.test(String(pin || ''))) throw AuthError_('pin_format');
+function authCheckCredentialsFormat_(username, password) {
+  if (!/^[a-z0-9._@-]{3,40}$/.test(authNormUser_(username))) throw AuthError_('username_format');
+  if (String(password || '').length < 8) throw AuthError_('password_format');
 }
 
 function authIssueToken_() {
@@ -94,21 +100,30 @@ function authIssueToken_() {
   return body + '.' + authSign_('token|' + body);
 }
 
-function authSetPin_(pin) {
+function authSetPassword_(username, password) {
   var p = authProps_();
   var salt = Utilities.getUuid();
-  p.setProperties({ PIN_SALT: salt, PIN_HASH: authHashPin_(pin, salt), PIN_CHANGED_MS: String(Date.now()) });
+  p.setProperties({
+    USERNAME: authNormUser_(username), PW_SALT: salt, PW_HASH: authHashPassword_(password, salt),
+    PW_CHANGED_MS: String(Date.now())
+  });
   p.deleteProperty('FAILED_TRIES');
 }
 
-/** First run: setup code from the spreadsheet + new PIN. */
+function authCredentialsOk_(username, password) {
+  var p = authProps_();
+  return authNormUser_(username) === p.getProperty('USERNAME') &&
+    authHashPassword_(String(password || ''), p.getProperty('PW_SALT')) === p.getProperty('PW_HASH');
+}
+
+/** First run: setup code from the spreadsheet + new username and password. */
 function authSetup_(payload) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
     if (!authSetupNeeded_()) throw AuthError_('already_setup');
     authCheckLock_();
-    authCheckPinFormat_(payload.pin);
+    authCheckCredentialsFormat_(payload.username, payload.password);
     var p = authProps_();
     var code = p.getProperty('SETUP_CODE');
     var at = Number(p.getProperty('SETUP_CODE_AT') || 0);
@@ -120,10 +135,10 @@ function authSetup_(payload) {
       authFailed_();
       throw AuthError_('setup_code_wrong');
     }
-    authSetPin_(String(payload.pin));
+    authSetPassword_(payload.username, String(payload.password));
     p.deleteProperty('SETUP_CODE');
     p.deleteProperty('SETUP_CODE_AT');
-    logEvent_({ stage: 'setup', status: 'OK', message: 'PIN created' });
+    logEvent_({ stage: 'setup', status: 'OK', message: 'Account created for ' + authNormUser_(payload.username) });
     return { token: authIssueToken_() };
   } finally {
     lock.releaseLock();
@@ -133,13 +148,12 @@ function authSetup_(payload) {
 function authLogin_(payload) {
   if (authSetupNeeded_()) throw AuthError_('setup_needed');
   authCheckLock_();
-  var p = authProps_();
-  if (authHashPin_(String(payload.pin || ''), p.getProperty('PIN_SALT')) !== p.getProperty('PIN_HASH')) {
+  if (!authCredentialsOk_(payload.username, payload.password)) {
     authFailed_();
-    throw AuthError_('pin_wrong');
+    throw AuthError_('login_wrong');
   }
-  p.deleteProperty('FAILED_TRIES');
-  return { token: authIssueToken_() };
+  authProps_().deleteProperty('FAILED_TRIES');
+  return { token: authIssueToken_(), username: authProps_().getProperty('USERNAME') };
 }
 
 function authVerify_(token) {
@@ -148,32 +162,34 @@ function authVerify_(token) {
   var body = parts[0] + '.' + parts[1];
   if (authSign_('token|' + body) !== parts[2]) throw AuthError_('auth_required');
   if (Number(parts[1]) < Date.now()) throw AuthError_('auth_expired');
-  var changed = Number(authProps_().getProperty('PIN_CHANGED_MS') || 0);
+  var changed = Number(authProps_().getProperty('PW_CHANGED_MS') || 0);
   if (Number(parts[0]) < changed) throw AuthError_('auth_expired');
   return true;
 }
 
-function authChangePin_(payload) {
+function authChangePassword_(payload) {
+  authCheckLock_();
   var p = authProps_();
-  if (authHashPin_(String(payload.currentPin || ''), p.getProperty('PIN_SALT')) !== p.getProperty('PIN_HASH')) {
+  if (!authCredentialsOk_(p.getProperty('USERNAME'), payload.currentPassword)) {
     authFailed_();
-    throw AuthError_('pin_wrong');
+    throw AuthError_('password_wrong');
   }
-  authCheckPinFormat_(payload.newPin);
-  authSetPin_(String(payload.newPin));
-  logEvent_({ stage: 'settings', status: 'OK', message: 'PIN changed' });
-  return { token: authIssueToken_() };
+  var username = payload.newUsername ? payload.newUsername : p.getProperty('USERNAME');
+  authCheckCredentialsFormat_(username, payload.newPassword);
+  authSetPassword_(username, String(payload.newPassword));
+  logEvent_({ stage: 'settings', status: 'OK', message: 'Password changed' });
+  return { token: authIssueToken_(), username: authNormUser_(username) };
 }
 
 /**
- * Run from the Apps Script editor if the PIN is forgotten: removes the PIN so
- * the app asks for a new setup code (written to ProcessingLog) on next open.
+ * Run from the Apps Script editor if the password is forgotten: removes the
+ * account so the app asks for a new setup code (written to ProcessingLog).
  */
-function resetPin() {
+function resetLogin() {
   var p = authProps_();
-  ['PIN_HASH', 'PIN_SALT', 'SETUP_CODE', 'SETUP_CODE_AT', 'LOCK_UNTIL', 'FAILED_TRIES'].forEach(function (k) {
+  ['USERNAME', 'PW_HASH', 'PW_SALT', 'SETUP_CODE', 'SETUP_CODE_AT', 'LOCK_UNTIL', 'FAILED_TRIES'].forEach(function (k) {
     p.deleteProperty(k);
   });
-  p.setProperty('PIN_CHANGED_MS', String(Date.now()));
-  Logger.log('PIN removed. Open the app to set a new one.');
+  p.setProperty('PW_CHANGED_MS', String(Date.now()));
+  Logger.log('Login removed. Open the app to create a new username and password.');
 }

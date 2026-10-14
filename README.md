@@ -8,8 +8,8 @@ correct, search and re-open every invoice.
   https://abdelfatehtebbani-creator.github.io/Invoice-Scanner-App/ (installable, own icon, no Apps Script banner).
 - **API:** `src/`, a Google Apps Script web app running as the owner. It reads and writes Google Sheets
   (data) and Google Drive (images and free OCR).
-- **Sign-in:** a PIN (6–8 digits). Every data request needs the owner's signed token; the code
-  contains no secret. It is independent of every other project.
+- **Sign-in:** username and password, from any device or browser (no Google account needed).
+  Every data request needs a signed session token; the code contains no secret. It is independent of every other project.
 
 ## How it works
 
@@ -48,7 +48,7 @@ correct, search and re-open every invoice.
 | `src/Config.js` | Spreadsheet/folder IDs, sheet columns, status names |
 | `src/Setup.js` | `setup()`: verifies or creates the spreadsheet, the 3 sheets, columns and the image folder |
 | `src/Code.js` | `doPost` JSON API used by the app (extract, save, list, get, settings) |
-| `src/Auth.js` | PIN setup with a one-time code, sign-in lockout, signed tokens, `resetPin()` |
+| `src/Auth.js` | Account setup with a one-time code, salted password hash, lockout, signed tokens, `resetLogin()` |
 | `src/Ocr.js` | Drive OCR and the optional Gemini engine |
 | `src/Parser.js` | OCR text → invoice fields and line items, with confidence per field |
 | `src/Shared.js` | Number parsing and validation, used by both the server and the page |
@@ -72,7 +72,7 @@ npx @google/clasp update-deployment AKfycbydRt_CBITfNIMCNqgBTq00KU-uJKU2XdXe7aSz
 
 Updating the existing deployment keeps the API address used in `app/js/config.js`.
 The manifest deploys it as *Execute as: me* and *Who has access: anyone* so the app can reach it;
-the PIN token protects every data action.
+the session token protects every data action.
 
 App: push to `main`; the GitHub Actions workflow publishes `app/` to GitHub Pages
 (repository Settings → Pages → Source: GitHub Actions). Bump `VERSION` in `app/sw.js` on each release.
@@ -83,9 +83,10 @@ App: push to `main`; the GitHub Actions workflow publishes `app/` to GitHub Page
 2. The app asks for a **setup code**. Open the `InvoiceScanner_Data` spreadsheet, sheet
    `ProcessingLog`: the last row says `Invoice Scanner setup code: 123456` (valid 60 minutes;
    a new one is written when it expires). Only you can open that spreadsheet.
-3. Choose a PIN of 6 to 8 digits. The device stays signed in for 90 days.
-4. Forgot the PIN? In the Apps Script editor run `resetPin`, then open the app again to get a new
-   setup code. Five wrong PINs lock sign-in for 15 minutes.
+3. Choose a username and a password (8+ characters). Each device stays signed in for 90 days;
+   change the password in Settings (this signs out the other devices).
+4. Forgot the password? In the Apps Script editor run `resetLogin`, then open the app again to get
+   a new setup code. Five wrong attempts lock sign-in for 15 minutes.
 
 ## Install on your phone or computer
 

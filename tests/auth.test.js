@@ -45,35 +45,38 @@ test('data actions need a token', () => {
   assert.equal(s.call('invoices.list', {}, '1.2.forged').error.code, 'auth_required');
 });
 
-test('first run: setup code from the sheet, then PIN sign-in', () => {
+test('first run: setup code from the sheet, then username + password sign-in', () => {
   const s = makeServer();
   const ping = s.call('ping', {});
   assert.equal(ping.data.setupNeeded, true);
   const code = s.setupCode();
   assert.match(code, /^\d{6}$/);
   assert.ok(s.logs.some((l) => l.message.includes(code)), 'code written to ProcessingLog');
-  assert.equal(s.call('auth.setup', { setupCode: '000000', pin: '246810' }).error.code, 'setup_code_wrong');
-  assert.equal(s.call('auth.setup', { setupCode: code, pin: '12' }).error.code, 'pin_format');
-  const ok = s.call('auth.setup', { setupCode: code, pin: '246810' });
+  assert.equal(s.call('auth.setup', { setupCode: '000000', username: 'abdou', password: 'Secret#2026' }).error.code, 'setup_code_wrong');
+  assert.equal(s.call('auth.setup', { setupCode: code, username: 'abdou', password: 'short' }).error.code, 'password_format');
+  assert.equal(s.call('auth.setup', { setupCode: code, username: 'a b', password: 'Secret#2026' }).error.code, 'username_format');
+  const ok = s.call('auth.setup', { setupCode: code, username: 'Abdou', password: 'Secret#2026' });
   assert.ok(ok.ok);
   assert.ok(s.call('invoices.list', {}, ok.data.token).ok);
-  assert.equal(s.call('auth.setup', { setupCode: code, pin: '999999' }).error.code, 'already_setup');
+  assert.equal(s.call('auth.setup', { setupCode: code, username: 'x', password: 'other-pass' }).error.code, 'already_setup');
   assert.equal(s.call('ping', {}).data.setupNeeded, false);
-  assert.ok(!('PIN' in s.props) && !Object.values(s.props).includes('246810'), 'PIN stored only as a hash');
+  assert.ok(!Object.values(s.props).some((v) => v.includes('Secret#2026')), 'password stored only as a hash');
+  assert.ok(s.call('auth.login', { username: ' ABDOU ', password: 'Secret#2026' }).ok, 'username is case-insensitive');
+  assert.equal(s.call('auth.login', { username: 'other', password: 'Secret#2026' }).error.code, 'login_wrong');
 });
 
-test('wrong PINs lock sign-in; changing the PIN invalidates old tokens', () => {
+test('wrong passwords lock sign-in; changing the password invalidates old tokens', () => {
   const s = makeServer();
   s.call('ping', {});
-  const t1 = s.call('auth.setup', { setupCode: s.setupCode(), pin: '246810' }).data.token;
-  assert.ok(s.call('auth.login', { pin: '246810' }).ok);
-  for (let i = 0; i < 5; i++) assert.equal(s.call('auth.login', { pin: '000000' }).error.code, 'pin_wrong');
-  assert.equal(s.call('auth.login', { pin: '246810' }).error.code, 'locked');
+  const t1 = s.call('auth.setup', { setupCode: s.setupCode(), username: 'abdou', password: 'Secret#2026' }).data.token;
+  for (let i = 0; i < 5; i++) assert.equal(s.call('auth.login', { username: 'abdou', password: 'guess' + i }).error.code, 'login_wrong');
+  assert.equal(s.call('auth.login', { username: 'abdou', password: 'Secret#2026' }).error.code, 'locked');
   delete s.props.LOCK_UNTIL;
-  const t2 = s.call('auth.changePin', { currentPin: '246810', newPin: '13579135' }, t1);
+  assert.equal(s.call('auth.changePassword', { currentPassword: 'nope', newPassword: 'New-pass-2026' }, t1).error.code, 'password_wrong');
+  const t2 = s.call('auth.changePassword', { currentPassword: 'Secret#2026', newPassword: 'New-pass-2026' }, t1);
   assert.ok(t2.ok);
   // Tokens issued before the change stop working (same-millisecond tokens aside).
-  s.props.PIN_CHANGED_MS = String(Date.now() + 1);
+  s.props.PW_CHANGED_MS = String(Date.now() + 1);
   assert.equal(s.call('invoices.list', {}, t1).error.code, 'auth_expired');
-  assert.ok(s.call('auth.login', { pin: '13579135' }).ok);
+  assert.ok(s.call('auth.login', { username: 'abdou', password: 'New-pass-2026' }).ok);
 });

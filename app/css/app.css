@@ -219,5 +219,6 @@ dl.kv dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
 .login { max-width: 380px; margin: 24px auto; text-align: center; }
 .login img { border-radius: 18px; }
 .login .field { text-align: start; margin-bottom: 10px; }
-.login input { font-size: 20px; letter-spacing: 4px; text-align: center !important; }
+.login input { font-size: 17px; }
+.login #setupCode { letter-spacing: 4px; text-align: center !important; font-size: 20px; }
 body.signed-out .tabbar, body.signed-out #langBtn ~ * { display: none; }

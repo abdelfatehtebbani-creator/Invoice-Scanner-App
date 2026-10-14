@@ -7,19 +7,19 @@
  *
  * The web app is deployed "Execute as: me" and "Who has access: anyone" so the
  * PWA can reach it; every data action requires the owner's signed token
- * (see Auth.js). Nothing is readable without it.
+ * (username + password, see Auth.js). Nothing is readable without it.
  */
 
 var API_VERSION = '2.0.0';
 
 var ROUTES = {
-  'app.bootstrap': function () { return apiBootstrap(); },
+  'app.bootstrap': function () { var b = apiBootstrap(); b.username = authProps_().getProperty('USERNAME'); return b; },
   'invoices.extract': function (p) { return apiExtract(p); },
   'invoices.save': function (p) { return apiSave(p); },
   'invoices.list': function (p) { return apiList(p); },
   'invoices.get': function (p) { return apiGet(p.invoiceId); },
   'settings.save': function (p) { return apiSaveSettings(p); },
-  'auth.changePin': function (p) { return authChangePin_(p); }
+  'auth.changePassword': function (p) { return authChangePassword_(p); }
 };
 
 var PUBLIC_ROUTES = {

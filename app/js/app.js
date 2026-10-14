@@ -39,11 +39,14 @@
       geminiOn: 'المحرك الحالي: Gemini (قراءة الجداول مباشرة من الصورة).', geminiOff: 'المحرك الحالي: التعرف الضوئي في Google Drive (مجاني).',
       geminiInfo: 'Gemini يقرأ الجداول بدقة أعلى. خطته المجانية محدودة الاستخدام وقد تستخدم Google المحتوى لتحسين خدماتها. المفتاح يُحفظ على الخادم فقط ولا يظهر في الصفحة.',
       noText: 'لم يُعثر على نص في الصورة. جرّب صورة أوضح.', geminiFailed: 'تعذّر استخدام Gemini، فاستُخدم التعرف الضوئي في Drive.',
-      setupHint: 'أول استخدام: افتح جدول InvoiceScanner_Data، ورقة ProcessingLog، وانسخ «رمز الإعداد» من آخر سطر، ثم اختر رمز PIN من 6 إلى 8 أرقام.',
-      setupCode: 'رمز الإعداد (من الجدول)', pin: 'رمز PIN', pinNew: 'اختر رمز PIN (6–8 أرقام)', pinRepeat: 'أعد كتابة الرمز',
-      signIn: 'دخول', createPin: 'إنشاء الرمز والدخول', signOut: 'تسجيل الخروج', changePin: 'تغيير الرمز',
-      currentPin: 'الرمز الحالي', newPin: 'الرمز الجديد', security: 'الحماية', pinChanged: 'تم تغيير الرمز',
-      pinMismatch: 'الرمزان غير متطابقين', e_pin_wrong: 'رمز PIN غير صحيح', e_pin_format: 'الرمز يجب أن يكون من 6 إلى 8 أرقام',
+      setupHint: 'أول استخدام: افتح جدول InvoiceScanner_Data، ورقة ProcessingLog، وانسخ «رمز الإعداد» من آخر سطر، ثم اختر اسم مستخدم وكلمة مرور.',
+      setupCode: 'رمز الإعداد (من الجدول)', username: 'اسم المستخدم', password: 'كلمة المرور', passwordRepeat: 'أعد كتابة كلمة المرور',
+      signIn: 'دخول', createAccount: 'إنشاء الحساب والدخول', signOut: 'تسجيل الخروج', changePassword: 'تغيير كلمة المرور',
+      currentPassword: 'كلمة المرور الحالية', newPassword: 'كلمة المرور الجديدة', security: 'الحساب', passwordChanged: 'تم تغيير كلمة المرور',
+      signedInAs: 'مسجّل الدخول باسم: {u}',
+      pinMismatch: 'كلمتا المرور غير متطابقتين', e_login_wrong: 'اسم المستخدم أو كلمة المرور غير صحيح',
+      e_password_wrong: 'كلمة المرور الحالية غير صحيحة', e_password_format: 'كلمة المرور يجب ألا تقل عن 8 أحرف',
+      e_username_format: 'اسم المستخدم: من 3 إلى 40 حرفًا لاتينيًا أو أرقامًا أو . _ - @',
       e_locked: 'محاولات خاطئة كثيرة. حاول بعد 15 دقيقة.', e_setup_code_wrong: 'رمز الإعداد غير صحيح',
       e_setup_code_expired: 'انتهت صلاحية رمز الإعداد. ستجد رمزًا جديدًا في ورقة ProcessingLog.',
       e_auth_required: 'سجّل الدخول من جديد', e_auth_expired: 'انتهت الجلسة، سجّل الدخول من جديد',
@@ -99,11 +102,14 @@
       geminiOn: 'Current engine: Gemini (reads tables directly from the image).', geminiOff: 'Current engine: Google Drive OCR (free).',
       geminiInfo: 'Gemini reads tables much more accurately. Its free tier has usage limits and Google may use free-tier content to improve its products. The key is stored on the server only and never shown in the page.',
       noText: 'No text was found in the image. Try a sharper photo.', geminiFailed: 'Gemini was unavailable, so Drive OCR was used.',
-      setupHint: 'First use: open the InvoiceScanner_Data spreadsheet, sheet ProcessingLog, copy the "setup code" from the last row, then choose a 6–8 digit PIN.',
-      setupCode: 'Setup code (from the spreadsheet)', pin: 'PIN', pinNew: 'Choose a PIN (6–8 digits)', pinRepeat: 'Repeat the PIN',
-      signIn: 'Sign in', createPin: 'Create PIN and sign in', signOut: 'Sign out', changePin: 'Change PIN',
-      currentPin: 'Current PIN', newPin: 'New PIN', security: 'Security', pinChanged: 'PIN changed',
-      pinMismatch: 'The PINs do not match', e_pin_wrong: 'Wrong PIN', e_pin_format: 'The PIN must be 6 to 8 digits',
+      setupHint: 'First use: open the InvoiceScanner_Data spreadsheet, sheet ProcessingLog, copy the "setup code" from the last row, then choose a username and password.',
+      setupCode: 'Setup code (from the spreadsheet)', username: 'Username', password: 'Password', passwordRepeat: 'Repeat the password',
+      signIn: 'Sign in', createAccount: 'Create account and sign in', signOut: 'Sign out', changePassword: 'Change password',
+      currentPassword: 'Current password', newPassword: 'New password', security: 'Account', passwordChanged: 'Password changed',
+      signedInAs: 'Signed in as: {u}',
+      pinMismatch: 'The passwords do not match', e_login_wrong: 'Wrong username or password',
+      e_password_wrong: 'The current password is wrong', e_password_format: 'The password must be at least 8 characters',
+      e_username_format: 'Username: 3 to 40 Latin letters, digits or . _ - @',
       e_locked: 'Too many wrong attempts. Try again in 15 minutes.', e_setup_code_wrong: 'Wrong setup code',
       e_setup_code_expired: 'The setup code expired. A new one is in the ProcessingLog sheet.',
       e_auth_required: 'Please sign in again', e_auth_expired: 'Session expired, please sign in again',
@@ -241,8 +247,7 @@
     fillSelect($('sOcrLang'), [['auto', t('ocrAuto')], ['ar', 'العربية'], ['fr', 'Français'], ['en', 'English']], state.ocrLang);
     setTitle();
     if (state.screen === 'login') {
-      $('pinLabel').textContent = t(setupMode ? 'pinNew' : 'pin');
-      $('loginBtn').textContent = t(setupMode ? 'createPin' : 'signIn');
+      $('loginBtn').textContent = t(setupMode ? 'createAccount' : 'signIn');
     }
     if (state.screen === 'review' && state.review) renderReview();
     if (state.screen === 'details' && state.details) renderDetails(state.details);
@@ -755,7 +760,7 @@
     $('sOwner').value = b.ownerBusinessName || '';
     if (b.spreadsheetUrl) $('sheetLink').href = b.spreadsheetUrl;
     if (b.folderUrl) $('folderLink').href = b.folderUrl;
-    $('whoami').textContent = b.email || '';
+    $('whoami').textContent = b.username ? t('signedInAs', { u: b.username }) : '';
   }
   function saveSettings(clearKey) {
     var s = { ownerBusinessName: $('sOwner').value.trim() };
@@ -832,8 +837,8 @@
     document.body.classList.add('signed-out');
     $('setupFields').classList.toggle('hidden', !setupMode);
     $('pin2Wrap').classList.toggle('hidden', !setupMode);
-    $('pinLabel').textContent = t(setupMode ? 'pinNew' : 'pin');
-    $('loginBtn').textContent = t(setupMode ? 'createPin' : 'signIn');
+    $('loginBtn').textContent = t(setupMode ? 'createAccount' : 'signIn');
+    $('userInput').value = LS.get('user', '');
     $('loginError').classList.toggle('hidden', !message);
     $('loginError').textContent = message || '';
     $('pinInput').value = ''; $('pin2Input').value = '';
@@ -841,7 +846,7 @@
     state.stack = [];
     show('login', false);
     $('backBtn').classList.add('hidden');
-    setTimeout(function () { (setupMode ? $('setupCode') : $('pinInput')).focus(); }, 50);
+    setTimeout(function () { (setupMode ? $('setupCode') : ($('userInput').value ? $('pinInput') : $('userInput'))).focus(); }, 50);
   }
   function signedIn() {
     document.body.classList.remove('signed-out');
@@ -853,15 +858,18 @@
     loadRecent();
   }
   function submitLogin() {
-    var pin = $('pinInput').value.trim();
+    var pin = $('pinInput').value;
+    var user = $('userInput').value.trim();
     $('loginError').classList.add('hidden');
-    if (setupMode && pin !== $('pin2Input').value.trim()) {
+    if (setupMode && pin !== $('pin2Input').value) {
       $('loginError').textContent = t('pinMismatch'); $('loginError').classList.remove('hidden'); return;
     }
     $('loginBtn').disabled = true;
-    var req = setupMode ? api('auth.setup', { setupCode: $('setupCode').value.trim(), pin: pin }) : api('auth.login', { pin: pin });
+    var req = setupMode ? api('auth.setup', { setupCode: $('setupCode').value.trim(), username: user, password: pin }) :
+      api('auth.login', { username: user, password: pin });
     req.then(function (r) {
       session.token = r.token;
+      LS.set('user', user.toLowerCase());
       signedIn();
     }).catch(function (e) {
       if (e.code === 'already_setup') return showLogin(false);
@@ -870,15 +878,15 @@
     }).then(function () { $('loginBtn').disabled = false; });
   }
   $('loginBtn').onclick = submitLogin;
-  ['pinInput', 'pin2Input', 'setupCode'].forEach(function (id) {
+  ['userInput', 'pinInput', 'pin2Input', 'setupCode'].forEach(function (id) {
     $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') submitLogin(); });
   });
   $('signOutBtn').onclick = function () { session.token = ''; showLogin(false); };
   $('changePinBtn').onclick = function () {
-    api('auth.changePin', { currentPin: $('sCurPin').value.trim(), newPin: $('sNewPin').value.trim() }).then(function (r) {
+    api('auth.changePassword', { currentPassword: $('sCurPin').value, newPassword: $('sNewPin').value }).then(function (r) {
       session.token = r.token;
       $('sCurPin').value = ''; $('sNewPin').value = '';
-      toast(t('pinChanged'));
+      toast(t('passwordChanged'));
     }).catch(function (e) { toast(e.message, 6000); });
   };
 
