@@ -4,8 +4,12 @@ A personal mobile web app that turns photos of invoices and receipts (Arabic, Fr
 structured rows in Google Sheets, keeps the original image in Google Drive, and lets you review,
 correct, search and re-open every invoice.
 
-It runs entirely on your own Google account: Google Apps Script (backend and web app), Google Sheets
-(data) and Google Drive (images and free OCR). It is independent of every other project.
+- **App (PWA):** `app/`, published to GitHub Pages at
+  https://abdelfatehtebbani-creator.github.io/Invoice-Scanner-App/ (installable, own icon, no Apps Script banner).
+- **API:** `src/`, a Google Apps Script web app running as the owner. It reads and writes Google Sheets
+  (data) and Google Drive (images and free OCR).
+- **Sign-in:** a PIN (6–8 digits). Every data request needs the owner's signed token; the code
+  contains no secret. It is independent of every other project.
 
 ## How it works
 
@@ -43,48 +47,53 @@ It runs entirely on your own Google account: Google Apps Script (backend and web
 | `src/appsscript.json` | Manifest: V8, time zone, OAuth scopes, web app access = only me |
 | `src/Config.js` | Spreadsheet/folder IDs, sheet columns, status names |
 | `src/Setup.js` | `setup()`: verifies or creates the spreadsheet, the 3 sheets, columns and the image folder |
-| `src/Code.js` | `doGet` and the API used by the page (extract, save, list, get, settings), owner check |
+| `src/Code.js` | `doPost` JSON API used by the app (extract, save, list, get, settings) |
+| `src/Auth.js` | PIN setup with a one-time code, sign-in lockout, signed tokens, `resetPin()` |
 | `src/Ocr.js` | Drive OCR and the optional Gemini engine |
 | `src/Parser.js` | OCR text → invoice fields and line items, with confidence per field |
 | `src/Shared.js` | Number parsing and validation, used by both the server and the page |
 | `src/Store.js` | Sheet reads/writes, duplicate search, processing log |
-| `src/Index.html`, `src/App.html`, `src/Styles.html` | Mobile interface (Arabic RTL / English) |
-| `tests/` | Parser and validation tests, plus a phone-sized browser test of the interface |
+| `app/index.html`, `app/js/app.js`, `app/css/app.css` | Mobile interface (Arabic RTL / English) |
+| `app/js/shared.js` | Copy of `src/Shared.js` (`npm run sync`; a test checks they match) |
+| `app/js/config.js` | Address of the Apps Script API |
+| `app/manifest.webmanifest`, `app/sw.js`, `app/icons/` | PWA install data, offline app shell, icons |
+| `.github/workflows/pages.yml` | Publishes `app/` to GitHub Pages on every push to `main` |
+| `tests/` | Parser, validation and sign-in tests, plus a phone-sized browser test of the app |
 
-## Deploy (one time, from a computer)
+## Deploy
 
-Requires Node.js and [clasp](https://github.com/google/clasp) signed in to your Google account
-(`npx @google/clasp login`), and the Apps Script API enabled at https://script.google.com/home/usersettings.
-
-```bash
-npm test                 # local tests
-npx @google/clasp push --force
-npx @google/clasp deploy --description "Invoice Scanner"
-```
-
-`clasp deploy` prints a deployment ID. To update the app later **without changing its URL**:
+API (from the computer where clasp is signed in to the owner account):
 
 ```bash
+npm test
 npx @google/clasp push --force
-npx @google/clasp deploy -i <deploymentId> --description "update"
+npx @google/clasp update-deployment AKfycbydRt_CBITfNIMCNqgBTq00KU-uJKU2XdXe7aSz8HRjd2PJbCWwKxtcJf-ymovyp7Of0w --description "update"
 ```
 
-Then, in the Apps Script editor, run the `setup` function once and accept the Google authorization
-screen. It reports which sheets/columns it created and never deletes data.
+Updating the existing deployment keeps the API address used in `app/js/config.js`.
+The manifest deploys it as *Execute as: me* and *Who has access: anyone* so the app can reach it;
+the PIN token protects every data action.
 
-The web app URL looks like `https://script.google.com/macros/s/<deploymentId>/exec`.
-It is deployed as *Execute as: me* and *Who has access: only myself*, so only your Google account
-can open it, and every API call re-checks that the caller is the owner.
+App: push to `main`; the GitHub Actions workflow publishes `app/` to GitHub Pages
+(repository Settings → Pages → Source: GitHub Actions). Bump `VERSION` in `app/sw.js` on each release.
 
-## Install on your phone
+## First use
 
-1. Open the web app URL in **Chrome** (Android) or **Safari** (iPhone), signed in to the same
-   Google account.
-2. Android: menu ⋮ → **Add to Home screen**. iPhone: Share → **Add to Home Screen**.
-3. Open it from the icon. Camera access is requested the first time you press *Capture invoice*.
+1. Open https://abdelfatehtebbani-creator.github.io/Invoice-Scanner-App/
+2. The app asks for a **setup code**. Open the `InvoiceScanner_Data` spreadsheet, sheet
+   `ProcessingLog`: the last row says `Invoice Scanner setup code: 123456` (valid 60 minutes;
+   a new one is written when it expires). Only you can open that spreadsheet.
+3. Choose a PIN of 6 to 8 digits. The device stays signed in for 90 days.
+4. Forgot the PIN? In the Apps Script editor run `resetPin`, then open the app again to get a new
+   setup code. Five wrong PINs lock sign-in for 15 minutes.
 
-Note: Apps Script cannot serve a service worker, so the app needs a connection (it cannot work
-offline) and the home-screen icon opens it in the browser frame.
+## Install on your phone or computer
+
+- Android (Chrome): open the app, menu ⋮ → **Install app** / **Add to Home screen**.
+- iPhone (Safari): Share → **Add to Home Screen**.
+- Computer (Chrome/Edge): the install icon in the address bar, or menu → **Install Invoice Scanner**.
+
+The app opens in its own window with its own icon. It needs a connection to scan or save.
 
 ## Settings
 

@@ -3,39 +3,43 @@
 // Usage: node tests/ui-harness.js <outDir>
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const { chromium } = require(process.env.PW_MODULE || 'playwright');
 const load = require('./load');
 
-const SRC = path.join(__dirname, '..', 'src');
+const APP = path.join(__dirname, '..', 'app');
 const OUT = process.argv[2] || path.join(__dirname, 'ui-out');
 fs.mkdirSync(OUT, { recursive: true });
 const ctx = load(['Shared.js', 'Parser.js']);
-const read = (f) => fs.readFileSync(path.join(SRC, f), 'utf8');
+const API = 'https://script.google.com/macros/s/AKfycbydRt_CBITfNIMCNqgBTq00KU-uJKU2XdXe7aSz8HRjd2PJbCWwKxtcJf-ymovyp7Of0w/exec';
 
-function buildPage() {
-  let html = read('Index.html');
-  html = html.replace("<?!= include_('Styles') ?>", read('Styles.html'));
-  html = html.replace("<?!= include_('App') ?>", read('App.html'));
-  html = html.replace('<?!= sharedSource_() ?>', 'var Shared = (' + ctx.SharedLib_.toString() + ')();');
-  const mock = `<script>
-    window.google = { script: { get run() {
-      let ok = () => {}, fail = () => {};
-      const runner = new Proxy({}, { get(_, name) {
-        if (name === 'withSuccessHandler') return (f) => { ok = f; return runner; };
-        if (name === 'withFailureHandler') return (f) => { fail = f; return runner; };
-        return (arg) => window.__api(name, JSON.stringify(arg === undefined ? null : arg))
-          .then((r) => ok(JSON.parse(r)), (e) => fail(new Error(e.message)));
-      } });
-      return runner;
-    } } };
-  </script>`;
-  // HtmlService adds this meta tag from doGet().
-  return html.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1">' + mock);
+// Static server for app/ (what GitHub Pages serves).
+function serve() {
+  const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
+  const server = http.createServer((req, res) => {
+    let f = decodeURIComponent(req.url.split('?')[0]);
+    if (f.endsWith('/')) f += 'index.html';
+    const file = path.join(APP, f);
+    if (!file.startsWith(APP) || !fs.existsSync(file)) { res.writeHead(404); return res.end(); }
+    res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream' });
+    fs.createReadStream(file).pipe(res);
+  });
+  return new Promise((r) => server.listen(0, '127.0.0.1', () => r(server)));
 }
 
 // ---- fake backend ----
 const db = { invoices: [], items: {}, saved: {} };
 let sample = 'fr_facture.txt';
+const auth = { pin: null, token: 'tok-1' };
+const publicApi = {
+  ping: () => ({ api: '2.0.0', setupNeeded: !auth.pin }),
+  'auth.setup': (p) => { if (p.setupCode !== '123456') throw { code: 'setup_code_wrong' }; auth.pin = p.pin; return { token: auth.token }; },
+  'auth.login': (p) => { if (p.pin !== auth.pin) throw { code: 'pin_wrong' }; return { token: auth.token }; }
+};
+const routes = {
+  'app.bootstrap': () => api.apiBootstrap(), 'invoices.extract': (p) => api.apiExtract(p), 'invoices.save': (p) => api.apiSave(p),
+  'invoices.list': (p) => api.apiList(p), 'invoices.get': (p) => api.apiGet(p.invoiceId), 'settings.save': (p) => api.apiSaveSettings(p)
+};
 const api = {
   apiBootstrap: () => ({ email: 'owner@example.com', geminiConfigured: false, spreadsheetUrl: '#', folderUrl: '#', today: '2026-10-14' }),
   apiExtract: (req) => {
@@ -81,18 +85,39 @@ const api = {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.exposeFunction('__api', async (name, arg) => {
-    await new Promise((r) => setTimeout(r, 150));
-    return JSON.stringify(api[name](JSON.parse(arg)));
+  await page.route(API + '*', async (route) => {
+    const req = JSON.parse(route.request().postData() || '{}');
+    let body;
+    try {
+      if (publicApi[req.action]) body = { ok: true, data: publicApi[req.action](req.payload) };
+      else if (req.token !== auth.token) body = { ok: false, error: { code: 'auth_required' } };
+      else body = { ok: true, data: routes[req.action](req.payload) };
+    } catch (e) { body = { ok: false, error: { code: e.code || 'server_error', message: String(e.message || e) } }; }
+    await new Promise((r) => setTimeout(r, 120));
+    await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(body) });
   });
-  const htmlPath = path.join(OUT, 'page.html');
-  fs.writeFileSync(htmlPath, buildPage());
-  await page.goto('file://' + htmlPath);
-  await page.waitForTimeout(500);
+  const server = await serve();
+  await page.goto('http://127.0.0.1:' + server.address().port + '/');
+  await page.waitForSelector('#screen-login:not(.hidden)');
+  await page.waitForTimeout(300);
   const shot = (n) => page.screenshot({ path: path.join(OUT, n + '.png'), fullPage: true });
   const results = [];
   const check = (name, cond) => { results.push((cond ? 'PASS ' : 'FAIL ') + name); };
-
+  check('first run asks for setup code', await page.locator('#setupFields:not(.hidden)').count() === 1);
+  await shot('00-setup');
+  await page.fill('#setupCode', '111111');
+  await page.fill('#pinInput', '246810');
+  await page.fill('#pin2Input', '246810');
+  await page.click('#loginBtn');
+  await page.waitForTimeout(400);
+  check('wrong setup code rejected', await page.locator('#loginError:not(.hidden)').count() === 1 && !auth.pin);
+  await page.fill('#setupCode', '123456');
+  await page.fill('#pinInput', '246810');
+  await page.fill('#pin2Input', '246810');
+  await page.click('#loginBtn');
+  await page.waitForSelector('#screen-home:not(.hidden)');
+  await page.waitForTimeout(300);
+  check('setup creates PIN and signs in', auth.pin === '246810');
   await shot('01-home-ar');
   // A tiny real image for the file input.
   const img = path.join(OUT, 'invoice.png');
@@ -170,7 +195,28 @@ const api = {
   await page.waitForTimeout(200);
   await shot('08-review-ar-arabic-invoice');
 
+  // Sign out, wrong PIN, then the right PIN.
+  await page.click('.tabbar [data-nav="settings"]');
+  await page.click('#mDiscard');
+  await page.waitForSelector('#screen-settings:not(.hidden)');
+  await shot('10-settings');
+  await page.click('#signOutBtn');
+  await page.waitForSelector('#screen-login:not(.hidden)');
+  check('sign out returns to PIN screen', await page.locator('#setupFields.hidden').count() === 1);
+  await page.fill('#pinInput', '000000');
+  await page.click('#loginBtn');
+  await page.waitForTimeout(400);
+  check('wrong PIN rejected', await page.locator('#loginError:not(.hidden)').count() === 1);
+  await shot('09-login-wrong-pin');
+  await page.fill('#pinInput', '246810');
+  await page.click('#loginBtn');
+  await page.waitForSelector('#screen-home:not(.hidden)');
+  check('right PIN signs in', true);
+  const manifest = await page.evaluate(() => fetch('manifest.webmanifest').then((r) => r.json()));
+  check('manifest has icons', manifest.icons.length === 3);
+
   check('no page errors', errors.length === 0);
+  server.close();
   console.log(results.join('\n'));
   if (errors.length) console.log('Errors:\n' + errors.join('\n'));
   await browser.close();

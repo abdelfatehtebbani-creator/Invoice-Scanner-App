@@ -1,4 +1,3 @@
-<script>
 (function () {
   'use strict';
 
@@ -40,6 +39,15 @@
       geminiOn: 'المحرك الحالي: Gemini (قراءة الجداول مباشرة من الصورة).', geminiOff: 'المحرك الحالي: التعرف الضوئي في Google Drive (مجاني).',
       geminiInfo: 'Gemini يقرأ الجداول بدقة أعلى. خطته المجانية محدودة الاستخدام وقد تستخدم Google المحتوى لتحسين خدماتها. المفتاح يُحفظ على الخادم فقط ولا يظهر في الصفحة.',
       noText: 'لم يُعثر على نص في الصورة. جرّب صورة أوضح.', geminiFailed: 'تعذّر استخدام Gemini، فاستُخدم التعرف الضوئي في Drive.',
+      setupHint: 'أول استخدام: افتح جدول InvoiceScanner_Data، ورقة ProcessingLog، وانسخ «رمز الإعداد» من آخر سطر، ثم اختر رمز PIN من 6 إلى 8 أرقام.',
+      setupCode: 'رمز الإعداد (من الجدول)', pin: 'رمز PIN', pinNew: 'اختر رمز PIN (6–8 أرقام)', pinRepeat: 'أعد كتابة الرمز',
+      signIn: 'دخول', createPin: 'إنشاء الرمز والدخول', signOut: 'تسجيل الخروج', changePin: 'تغيير الرمز',
+      currentPin: 'الرمز الحالي', newPin: 'الرمز الجديد', security: 'الحماية', pinChanged: 'تم تغيير الرمز',
+      pinMismatch: 'الرمزان غير متطابقين', e_pin_wrong: 'رمز PIN غير صحيح', e_pin_format: 'الرمز يجب أن يكون من 6 إلى 8 أرقام',
+      e_locked: 'محاولات خاطئة كثيرة. حاول بعد 15 دقيقة.', e_setup_code_wrong: 'رمز الإعداد غير صحيح',
+      e_setup_code_expired: 'انتهت صلاحية رمز الإعداد. ستجد رمزًا جديدًا في ورقة ProcessingLog.',
+      e_auth_required: 'سجّل الدخول من جديد', e_auth_expired: 'انتهت الجلسة، سجّل الدخول من جديد',
+      e_offline: 'لا يوجد اتصال بالإنترنت', e_setup_needed: 'التطبيق يحتاج إعدادًا أوليًا',
       error: 'حدث خطأ', retry: 'إعادة المحاولة', issuesTitle: 'الملاحظات', statusLbl: 'الحالة', engineLbl: 'المحرك',
       createdLbl: 'أُنشئت', updatedLbl: 'عُدّلت', idLbl: 'المعرّف', noImage: 'لا توجد صورة', ocrAuto: 'تلقائي',
       fixFirst: 'أكمل الحقول المطلوبة أولًا: {f}',
@@ -91,6 +99,15 @@
       geminiOn: 'Current engine: Gemini (reads tables directly from the image).', geminiOff: 'Current engine: Google Drive OCR (free).',
       geminiInfo: 'Gemini reads tables much more accurately. Its free tier has usage limits and Google may use free-tier content to improve its products. The key is stored on the server only and never shown in the page.',
       noText: 'No text was found in the image. Try a sharper photo.', geminiFailed: 'Gemini was unavailable, so Drive OCR was used.',
+      setupHint: 'First use: open the InvoiceScanner_Data spreadsheet, sheet ProcessingLog, copy the "setup code" from the last row, then choose a 6–8 digit PIN.',
+      setupCode: 'Setup code (from the spreadsheet)', pin: 'PIN', pinNew: 'Choose a PIN (6–8 digits)', pinRepeat: 'Repeat the PIN',
+      signIn: 'Sign in', createPin: 'Create PIN and sign in', signOut: 'Sign out', changePin: 'Change PIN',
+      currentPin: 'Current PIN', newPin: 'New PIN', security: 'Security', pinChanged: 'PIN changed',
+      pinMismatch: 'The PINs do not match', e_pin_wrong: 'Wrong PIN', e_pin_format: 'The PIN must be 6 to 8 digits',
+      e_locked: 'Too many wrong attempts. Try again in 15 minutes.', e_setup_code_wrong: 'Wrong setup code',
+      e_setup_code_expired: 'The setup code expired. A new one is in the ProcessingLog sheet.',
+      e_auth_required: 'Please sign in again', e_auth_expired: 'Session expired, please sign in again',
+      e_offline: 'No internet connection', e_setup_needed: 'The app needs first-time setup',
       error: 'Something went wrong', retry: 'Retry', issuesTitle: 'Issues', statusLbl: 'Status', engineLbl: 'Engine',
       createdLbl: 'Created', updatedLbl: 'Updated', idLbl: 'ID', noImage: 'No image', ocrAuto: 'Automatic',
       fixFirst: 'Fill in the required fields first: {f}',
@@ -150,20 +167,48 @@
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
   // ---------- Server calls ----------
-  function call(fn, arg, retries) {
-    return new Promise(function (resolve, reject) {
-      google.script.run
-        .withSuccessHandler(resolve)
-        .withFailureHandler(function (err) {
-          var msg = (err && err.message) || String(err);
-          // Network hiccups are retried; the server ignores repeated request IDs.
-          if ((retries || 0) > 0 && /network|NetworkError|timed out|Failed to fetch|503/i.test(msg)) {
-            setTimeout(function () { call(fn, arg, retries - 1).then(resolve, reject); }, 1500);
-          } else {
-            reject(new Error(msg));
-          }
-        })[fn](arg);
+  var ACTIONS = {
+    apiBootstrap: 'app.bootstrap', apiExtract: 'invoices.extract', apiSave: 'invoices.save',
+    apiList: 'invoices.list', apiGet: 'invoices.get', apiSaveSettings: 'settings.save'
+  };
+  var session = {
+    get token() { return LS.get('token', ''); },
+    set token(v) { try { if (v) localStorage.setItem('is_token', v); else localStorage.removeItem('is_token'); } catch (e) { /* blocked */ } }
+  };
+
+  /**
+   * Calls one server action on the Apps Script API. Sent as text/plain so the
+   * browser needs no CORS preflight. Network failures are retried: the server
+   * ignores a request ID it has already saved.
+   */
+  function api(action, payload, retries) {
+    var body = JSON.stringify({ action: action, payload: payload || {}, token: session.token });
+    return fetch(window.APP_CONFIG.apiUrl, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body, redirect: 'follow'
+    }).then(function (res) {
+      if (!res.ok) throw Object.assign(new Error('HTTP ' + res.status), { code: 'offline' });
+      return res.json();
+    }, function () {
+      throw Object.assign(new Error(t('e_offline')), { code: 'offline' });
+    }).then(function (r) {
+      if (r.ok) return r.data;
+      var code = r.error && r.error.code;
+      var err = new Error(T[state.lang]['e_' + code] ? t('e_' + code) : (r.error.message || code));
+      err.code = code;
+      if (code === 'auth_required' || code === 'auth_expired') {
+        session.token = '';
+        showLogin(false, err.message);
+      }
+      throw err;
+    }).catch(function (e) {
+      if (e.code === 'offline' && (retries || 0) > 0) {
+        return new Promise(function (r) { setTimeout(r, 1500); }).then(function () { return api(action, payload, retries - 1); });
+      }
+      throw e;
     });
+  }
+  function call(fn, arg, retries) {
+    return api(ACTIONS[fn], fn === 'apiGet' ? { invoiceId: arg } : arg, retries);
   }
 
   // ---------- UI helpers ----------
@@ -195,6 +240,10 @@
       ['Confirmed with issues', t('st_Confirmed with issues')], ['Verified', t('st_Verified')]], $('fStatus').value);
     fillSelect($('sOcrLang'), [['auto', t('ocrAuto')], ['ar', 'العربية'], ['fr', 'Français'], ['en', 'English']], state.ocrLang);
     setTitle();
+    if (state.screen === 'login') {
+      $('pinLabel').textContent = t(setupMode ? 'pinNew' : 'pin');
+      $('loginBtn').textContent = t(setupMode ? 'createPin' : 'signIn');
+    }
     if (state.screen === 'review' && state.review) renderReview();
     if (state.screen === 'details' && state.details) renderDetails(state.details);
     if (state.screen === 'settings') renderSettings();
@@ -776,12 +825,73 @@
     $('fFrom').value = savedF.from || '';
     $('fTo').value = savedF.to || '';
   } catch (e) { /* ignore */ }
+  // ---------- Sign-in ----------
+  var setupMode = false;
+  function showLogin(setup, message) {
+    setupMode = !!setup;
+    document.body.classList.add('signed-out');
+    $('setupFields').classList.toggle('hidden', !setupMode);
+    $('pin2Wrap').classList.toggle('hidden', !setupMode);
+    $('pinLabel').textContent = t(setupMode ? 'pinNew' : 'pin');
+    $('loginBtn').textContent = t(setupMode ? 'createPin' : 'signIn');
+    $('loginError').classList.toggle('hidden', !message);
+    $('loginError').textContent = message || '';
+    $('pinInput').value = ''; $('pin2Input').value = '';
+    state.review = null;
+    state.stack = [];
+    show('login', false);
+    $('backBtn').classList.add('hidden');
+    setTimeout(function () { (setupMode ? $('setupCode') : $('pinInput')).focus(); }, 50);
+  }
+  function signedIn() {
+    document.body.classList.remove('signed-out');
+    show('home', false);
+    call('apiBootstrap', null, 2).then(function (b) {
+      state.boot = b;
+      renderSettings();
+    }).catch(function (e) { if (e.code !== 'auth_required' && e.code !== 'auth_expired') toast(e.message, 8000); });
+    loadRecent();
+  }
+  function submitLogin() {
+    var pin = $('pinInput').value.trim();
+    $('loginError').classList.add('hidden');
+    if (setupMode && pin !== $('pin2Input').value.trim()) {
+      $('loginError').textContent = t('pinMismatch'); $('loginError').classList.remove('hidden'); return;
+    }
+    $('loginBtn').disabled = true;
+    var req = setupMode ? api('auth.setup', { setupCode: $('setupCode').value.trim(), pin: pin }) : api('auth.login', { pin: pin });
+    req.then(function (r) {
+      session.token = r.token;
+      signedIn();
+    }).catch(function (e) {
+      if (e.code === 'already_setup') return showLogin(false);
+      $('loginError').textContent = e.message;
+      $('loginError').classList.remove('hidden');
+    }).then(function () { $('loginBtn').disabled = false; });
+  }
+  $('loginBtn').onclick = submitLogin;
+  ['pinInput', 'pin2Input', 'setupCode'].forEach(function (id) {
+    $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') submitLogin(); });
+  });
+  $('signOutBtn').onclick = function () { session.token = ''; showLogin(false); };
+  $('changePinBtn').onclick = function () {
+    api('auth.changePin', { currentPin: $('sCurPin').value.trim(), newPin: $('sNewPin').value.trim() }).then(function (r) {
+      session.token = r.token;
+      $('sCurPin').value = ''; $('sNewPin').value = '';
+      toast(t('pinChanged'));
+    }).catch(function (e) { toast(e.message, 6000); });
+  };
+
   applyLang();
-  show('home', false);
-  call('apiBootstrap', null, 2).then(function (b) {
-    state.boot = b;
-    renderSettings();
-  }).catch(function (e) { toast(e.message, 8000); });
-  loadRecent();
+  if (session.token) {
+    signedIn();
+  } else {
+    show('login', false);
+    document.body.classList.add('signed-out');
+    api('ping', {}, 2).then(function (r) { showLogin(r.setupNeeded); })
+      .catch(function (e) { showLogin(false, e.message); });
+  }
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').catch(function () { /* optional */ });
+  }
 })();
-</script>

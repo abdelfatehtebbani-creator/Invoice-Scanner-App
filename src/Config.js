@@ -1,12 +1,13 @@
 /**
- * Project configuration. Resource IDs are not secrets: access to the
- * spreadsheet and folder is controlled by Google Drive sharing (owner only).
+ * Project configuration. Resource IDs are not secrets: the spreadsheet and the
+ * folder stay private in the owner's Google Drive and only this script, running
+ * as the owner, can open them.
  * Secrets such as the optional Gemini API key live in Script Properties and
  * never reach the browser.
  */
 var CONFIG = {
   APP_NAME: 'Invoice Scanner',
-  ICON_URL: 'https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/receipt_long/default/48px.svg',
+  APP_URL: 'https://abdelfatehtebbani-creator.github.io/Invoice-Scanner-App/',
   SPREADSHEET_NAME: 'InvoiceScanner_Data',
   FOLDER_NAME: 'InvoiceScanner_Images',
   // Resources the owner created for this app. If one of them cannot be opened,

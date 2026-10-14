@@ -1,48 +1,76 @@
 /**
- * Web app entry point and the functions the page calls with google.script.run.
- * The web app is deployed "Execute as: me" and "Who has access: only myself",
- * and every API call re-checks that the caller is the owner.
+ * JSON API used by the Invoice Scanner PWA (app/, hosted on GitHub Pages).
+ *
+ * Request:  POST, body sent as text/plain (no CORS preflight) =
+ *           {"action": "invoices.save", "token": "...", "payload": {...}}
+ * Response: {"ok": true, "data": ...} or {"ok": false, "error": {"code": "...", "message": "..."}}
+ *
+ * The web app is deployed "Execute as: me" and "Who has access: anyone" so the
+ * PWA can reach it; every data action requires the owner's signed token
+ * (see Auth.js). Nothing is readable without it.
  */
 
+var API_VERSION = '2.0.0';
+
+var ROUTES = {
+  'app.bootstrap': function () { return apiBootstrap(); },
+  'invoices.extract': function (p) { return apiExtract(p); },
+  'invoices.save': function (p) { return apiSave(p); },
+  'invoices.list': function (p) { return apiList(p); },
+  'invoices.get': function (p) { return apiGet(p.invoiceId); },
+  'settings.save': function (p) { return apiSaveSettings(p); },
+  'auth.changePin': function (p) { return authChangePin_(p); }
+};
+
+var PUBLIC_ROUTES = {
+  'ping': function () {
+    var setupNeeded = authSetupNeeded_();
+    if (setupNeeded) {
+      ensureSetup_();
+      authIssueSetupCode_();
+    }
+    return { api: API_VERSION, setupNeeded: setupNeeded };
+  },
+  'auth.setup': function (p) { ensureSetup_(); return authSetup_(p); },
+  'auth.login': function (p) { return authLogin_(p); }
+};
+
+function json_(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
 function doGet() {
-  ensureSetup_();
-  var t = HtmlService.createTemplateFromFile('Index');
-  var page = t.evaluate()
-    .setTitle(CONFIG.APP_NAME)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
-    // HtmlService only allows a few meta tags (viewport, *-web-app-capable, site verification).
-    .addMetaTag('mobile-web-app-capable', 'yes')
-    .addMetaTag('apple-mobile-web-app-capable', 'yes')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
+  return json_({ ok: true, data: { app: CONFIG.APP_NAME, api: API_VERSION, message: 'Open the app at ' + CONFIG.APP_URL } });
+}
+
+function doPost(e) {
+  return json_(handleRequest_(e && e.postData ? e.postData.contents : ''));
+}
+
+function handleRequest_(body) {
+  var req;
   try {
-    // Icon for the browser tab and the home-screen / desktop shortcut.
-    page.setFaviconUrl(CONFIG.ICON_URL);
-  } catch (e) {
-    console.warn('Favicon not accepted: ' + e.message);
+    req = JSON.parse(body || '{}');
+  } catch (err) {
+    return { ok: false, error: { code: 'bad_request' } };
   }
-  return page;
+  var action = String(req.action || '');
+  var payload = req.payload || {};
+  try {
+    if (PUBLIC_ROUTES[action]) return { ok: true, data: PUBLIC_ROUTES[action](payload) };
+    if (!ROUTES[action]) return { ok: false, error: { code: 'unknown_action' } };
+    authVerify_(req.token);
+    return { ok: true, data: ROUTES[action](payload) };
+  } catch (err) {
+    if (err && err.name === 'AuthError') return { ok: false, error: { code: err.code } };
+    return { ok: false, error: { code: 'server_error', message: err && err.message ? err.message : String(err) } };
+  }
 }
 
-function include_(name) {
-  return HtmlService.createHtmlOutputFromFile(name).getContent();
-}
-
-/** Source of the shared validation library, injected into the page. */
-function sharedSource_() {
-  return 'var Shared = (' + SharedLib_.toString() + ')();';
-}
-
-function assertOwner_() {
-  var active = Session.getActiveUser().getEmail();
-  var owner = Session.getEffectiveUser().getEmail();
-  if (!active || active !== owner) throw new Error('Access denied.');
-}
-
-/** Wraps an API call: owner check, timing and error logging. */
+/** Wraps an API call: timing and error logging. Authorization happens in handleRequest_. */
 function api_(stage, req, fn) {
   var started = Date.now();
   try {
-    assertOwner_();
     return fn();
   } catch (e) {
     logEvent_({
@@ -59,7 +87,7 @@ function apiBootstrap() {
     cleanupPendingImages_();
     var props = PropertiesService.getScriptProperties();
     return {
-      email: Session.getActiveUser().getEmail(),
+      email: Session.getEffectiveUser().getEmail(),
       geminiConfigured: geminiConfigured_(),
       geminiModel: props.getProperty('GEMINI_MODEL') || CONFIG.GEMINI_MODEL,
       ownerBusinessName: props.getProperty('OWNER_BUSINESS_NAME') || '',

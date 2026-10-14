@@ -1,8 +1,8 @@
 /**
  * Shared logic used by BOTH the server (Apps Script) and the browser.
  *
- * The whole library lives inside one function so its source can be injected
- * into the web page (see sharedSource_ in Code.js). Keep it dependency-free:
+ * The whole library lives inside one function and has no dependencies; it is
+ * copied into the app by scripts/sync-shared.js (app/js/shared.js). Keep it dependency-free:
  * no Apps Script services may be used in here.
  */
 function SharedLib_() {
